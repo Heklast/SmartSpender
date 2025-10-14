@@ -70,7 +70,7 @@ fun BeginScreen(appState: AppState) {
                 textAlign = TextAlign.Center
             )
             Button(
-                onClick = {appState.navigate(Route.Profile) },
+                onClick = {appState.navigate(Route.SignUp) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppColors.mint,
                     contentColor = AppColors.black
@@ -92,7 +92,7 @@ fun BeginScreen(appState: AppState) {
             fontSize = 10.sp,
         )
             Button(
-                onClick = { /* handle sign up */ },
+                onClick = { appState.navigate(Route.LogIn)},
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppColors.mint,
                     contentColor = AppColors.black
