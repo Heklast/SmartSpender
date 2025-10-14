@@ -1,6 +1,5 @@
-package org.smartspender.project
+package com.heklast.smartspender
 
-import com.heklast.smartspender.Platform
 import platform.UIKit.UIDevice
 
 class IOSPlatform: Platform {

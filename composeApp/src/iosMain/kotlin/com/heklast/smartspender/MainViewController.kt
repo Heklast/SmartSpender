@@ -1,6 +1,5 @@
-package org.smartspender.project
+package com.heklast.smartspender
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.heklast.smartspender.App
 
 fun MainViewController() = ComposeUIViewController { App() }

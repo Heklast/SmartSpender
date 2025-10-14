@@ -1,7 +1,6 @@
 package org.smartspender.project.core
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.ColorScheme
 
 object AppColors {
     val mint = Color(0xFF00C8B3)

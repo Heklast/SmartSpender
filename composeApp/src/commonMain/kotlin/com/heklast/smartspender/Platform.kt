@@ -1,4 +1,4 @@
-package org.smartspender.project
+package com.heklast.smartspender
 
 interface Platform {
     val name: String

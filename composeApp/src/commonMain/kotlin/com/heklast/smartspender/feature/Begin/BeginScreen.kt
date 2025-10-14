@@ -11,6 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.heklast.smartspender.navigation.AppState
+import com.heklast.smartspender.navigation.Route
 import org.jetbrains.compose.resources.painterResource
 import org.smartspender.project.core.AppColors
 import smartspender.composeapp.generated.resources.Res
@@ -19,7 +21,7 @@ import smartspender.composeapp.generated.resources.light
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BeginScreen() {
+fun BeginScreen(appState: AppState) {
 
     Box(
         modifier = Modifier
@@ -68,7 +70,7 @@ fun BeginScreen() {
                 textAlign = TextAlign.Center
             )
             Button(
-                onClick = { },
+                onClick = {appState.navigate(Route.Profile) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppColors.mint,
                     contentColor = AppColors.black

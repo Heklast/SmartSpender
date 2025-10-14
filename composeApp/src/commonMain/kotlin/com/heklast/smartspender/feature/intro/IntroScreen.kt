@@ -1,4 +1,4 @@
-package org.smartspender.project.features.Intro
+package com.heklast.smartspender.feature.intro
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
