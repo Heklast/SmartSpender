@@ -1,0 +1,43 @@
+package com.heklast.smartspender.feature.expense.list
+
+import com.heklast.smartspender.core.common.Result
+import com.heklast.smartspender.core.data.remote.dto.ExpenseResponse
+import com.heklast.smartspender.core.di.Services
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+class ExpensesListViewModel(
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+) {
+    private val api = Services.expenseApi
+
+    private val _items = MutableStateFlow<List<ExpenseResponse>>(emptyList())
+    val items: StateFlow<List<ExpenseResponse>> = _items
+
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+
+    fun refresh() {
+        _loading.value = true
+        scope.launch {
+            when (val r = api.list(limit = 50, offset = 0)) {
+                is Result.Ok  -> _items.value = r.value.items
+                is Result.Err -> { /* TODO: surface error */ }
+            }
+            _loading.value = false
+        }
+    }
+
+    fun delete(id: String) {
+        scope.launch {
+            when (api.delete(id)) {
+                is Result.Ok  -> _items.value = _items.value.filterNot { it.id == id }
+                is Result.Err -> { /* TODO: surface error */ }
+            }
+        }
+    }
+}
