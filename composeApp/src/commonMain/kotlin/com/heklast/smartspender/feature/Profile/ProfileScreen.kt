@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,13 +34,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.heklast.smartspender.features.profile.presentation.ProfileViewModel
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.core.AppColors
 
 @Preview
 @Composable
-fun ProfileScreen( //onSaveToDb: suspend (username: String, phone: String, email: String) -> Unit
+fun ProfileScreen(
 ){
 
     var enabled by remember { mutableStateOf(false) }
@@ -46,6 +51,18 @@ fun ProfileScreen( //onSaveToDb: suspend (username: String, phone: String, email
     var number    by remember { mutableStateOf("") }
     var email    by remember { mutableStateOf("") }
 
+    val vm = remember { ProfileViewModel(testUid = "rsmCNYtCjLRlk3f1M5xuv4rkTIM2") }
+    LaunchedEffect(Unit) { vm.load() }
+    val userState = vm.user.collectAsState()
+    val user = userState.value
+
+    LaunchedEffect(user) {
+        user?.let {
+            username = it.fullName
+            number = it.number.toString()
+            email = it.email
+        }
+    }
     val scope = rememberCoroutineScope()
     Box(
         modifier = Modifier
@@ -63,7 +80,7 @@ fun ProfileScreen( //onSaveToDb: suspend (username: String, phone: String, email
 
         Box(modifier=Modifier.fillMaxSize().background(AppColors.white, shape = RoundedCornerShape(70.dp))){
             Column(modifier= Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally){
-                Text("Hekla",modifier = Modifier
+                Text(user?.fullName ?:"",modifier = Modifier
                     .fillMaxWidth().padding(2.dp),
                     color = AppColors.black.copy(alpha = 0.9f),
                     fontSize = 20.sp,
@@ -87,7 +104,7 @@ fun ProfileScreen( //onSaveToDb: suspend (username: String, phone: String, email
                             Button(   onClick = {  onUpdateButtonClick(
                                 enabled = enabled,
                                 setEnabled = { enabled = it },
-                                save = { scope.launch { //onSaveToDb(username, number, email)
+                                save = { scope.launch { onSaveToDb(username, number, email)
                                      } }
                             ) },
                                 colors = ButtonDefaults.buttonColors(
@@ -107,6 +124,19 @@ fun ProfileScreen( //onSaveToDb: suspend (username: String, phone: String, email
         }
     }
     }
+
+private suspend fun onSaveToDb(username: String, number: String, email: String) {
+    val uid = "rsmCNYtCjLRlk3f1M5xuv4rkTIM2"
+    val updates = mapOf(
+        "fullName" to username,
+        "email" to email,
+        "number" to number.toIntOrNull()
+    )
+    Firebase.firestore
+        .collection("users")
+        .document(uid)
+        .update(updates)
+}
 
 @Composable
 fun ProfileTextField(label: String, value: String,
