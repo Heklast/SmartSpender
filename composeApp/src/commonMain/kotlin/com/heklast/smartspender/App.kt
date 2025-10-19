@@ -2,10 +2,13 @@
 package com.heklast.smartspender
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import com.heklast.smartspender.feature.About.AboutScreen
 import com.heklast.smartspender.feature.Profile.ProfileScreen
 import com.heklast.smartspender.feature.Statistics.StatisticsScreen
+import com.heklast.smartspender.navigation.BottomBar
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.feature.home.BeginScreen
 import com.heklast.smartspender.feature.intro.IntroScreen
@@ -22,6 +25,16 @@ fun App() {
     val route by appState.route.collectAsState()
 
     MaterialTheme {
+        Scaffold(
+            bottomBar = {
+                if (route == Route.Profile || route == Route.Statistics) {
+                    BottomBar(
+                        current = route,
+                        onNavigate = { target -> appState.navigate(target)}
+                    )
+                }
+            }
+        ){
         Surface {
             when (route) {
                 Route.Intro -> IntroScreen(
@@ -48,7 +61,9 @@ fun App() {
                 Route.Profile -> ProfileScreen()
 
                 Route.Statistics -> StatisticsScreen()
+                Route.About -> AboutScreen()
+
             }
         }
     }
-}
+}}

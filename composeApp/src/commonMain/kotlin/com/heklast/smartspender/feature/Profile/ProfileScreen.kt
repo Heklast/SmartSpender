@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ import com.heklast.smartspender.features.profile.presentation.ProfileViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.core.AppColors
 
@@ -80,12 +83,15 @@ fun ProfileScreen(
 
         Box(modifier=Modifier.fillMaxSize().background(AppColors.white, shape = RoundedCornerShape(70.dp))){
             Column(modifier= Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally){
+                Row(modifier = Modifier.fillMaxWidth().padding(10.dp)){
                 Text(user?.fullName ?:"",modifier = Modifier
                     .fillMaxWidth().padding(2.dp),
                     color = AppColors.black.copy(alpha = 0.9f),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.W600,
                     textAlign = TextAlign.Center )
+               // Image(url=user?.imageURL ?:"")
+                }
                 Spacer(modifier = Modifier.height(20.dp))
                 Column(modifier=Modifier.fillMaxSize().padding(10.dp)){
                     Text("Account Details", modifier = Modifier

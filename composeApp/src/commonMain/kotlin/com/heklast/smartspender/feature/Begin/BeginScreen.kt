@@ -92,7 +92,7 @@ fun BeginScreen(appState: AppState) {
             fontSize = 10.sp,
         )
             Button(
-                onClick = { appState.navigate(Route.LogIn)},
+                onClick = { appState.navigate(Route.Statistics)},
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppColors.mint,
                     contentColor = AppColors.black

@@ -6,7 +6,8 @@ data class User(
     val fullName: String="",
     val email: String="",
     val number: Int=0,
-    val birthday: String =""
+    val birthday: String ="",
+    val imageURL: String=""
     //pw?
     //photo
 

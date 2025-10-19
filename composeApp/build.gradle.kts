@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    kotlin("plugin.serialization") version libs.versions.kotlin.get()
 
+    id("org.jetbrains.kotlin.plugin.serialization")
     // Firebase for Android
     id("com.google.gms.google-services")
 }
@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+            implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
             // ✅ Multiplatform Firebase APIs (GitLive)
             implementation("dev.gitlive:firebase-auth:2.3.0")
