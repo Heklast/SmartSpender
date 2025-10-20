@@ -1,5 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val firebaseServiceCreds: String? = localProps.getProperty("firebaseServiceCredentials")
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
@@ -9,6 +15,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+    id("com.google.firebase.appdistribution") version "5.1.1"
 }
 
 kotlin {
@@ -87,6 +94,20 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            configure<com.google.firebase.appdistribution.gradle.AppDistributionExtension> {
+                serviceCredentialsFile = firebaseServiceCreds
+                appId = "1:1032360355331:android:2c453e92553665f2839036"
+                releaseNotes = "Manual upload from local machine"
+                groups = "testers"
+            }
+        }
+        getByName("debug") {
+            configure<com.google.firebase.appdistribution.gradle.AppDistributionExtension> {
+                serviceCredentialsFile = firebaseServiceCreds
+                appId = "1:1032360355331:android:2c453e92553665f2839036"
+                releaseNotes = "Debug build"
+                groups = "internal"
+            }
         }
     }
     compileOptions {
