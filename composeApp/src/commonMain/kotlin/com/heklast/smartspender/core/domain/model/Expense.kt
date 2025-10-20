@@ -1,12 +1,13 @@
 package com.heklast.smartspender.core.domain.model
-import kotlinx.serialization.Serializable
 
-@Serializable
-data class Expense (
-    val amount: Double=0.0,
-    val category: String="",
-    val date: String="",
-    val notes:String="",
-    val title: String="",
+import kotlinx.datetime.Instant
+
+data class Expense(
+    val id: String = "",
+    val title: String,
+    val amount: Double,
+    val date: Instant,
+    val category: ExpenseCategory,
+    val notes: String? = null,
+    val tags: List<String> = emptyList()
 )
-
