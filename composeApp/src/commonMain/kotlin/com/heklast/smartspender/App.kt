@@ -68,7 +68,7 @@ fun App() {
                         authService = com.heklast.smartspender.core.di.Services.authService,
                         onConfirmClick = { appState.navigate(Route.LogIn) },
                     )
-                    Route.Profile -> ProfileScreen()
+                    Route.Profile -> ProfileScreen(appState)
                     Route.Statistics -> StatisticsScreen()
                     Route.About -> AboutScreen()
                     Route.ExpensesList -> ExpensesListScreen(

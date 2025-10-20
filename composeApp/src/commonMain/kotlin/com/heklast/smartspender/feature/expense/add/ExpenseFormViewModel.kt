@@ -33,6 +33,11 @@ class ExpenseFormViewModel(
         _state.value = block(_state.value)
     }
 
+    /** Reset fields back to defaults/placeholders */
+    fun reset() {
+        _state.value = ExpenseFormState()
+    }
+
     fun save(onSuccess: (String) -> Unit) {
         val s = _state.value
         val amount = s.amountText.toDoubleOrNull()
@@ -53,10 +58,17 @@ class ExpenseFormViewModel(
                 tags = emptyList()
             )
             when (val r = api.create(req)) {
-                is Result.Ok  -> onSuccess(r.value)
-                is Result.Err -> _state.value = _state.value.copy(
-                    saving = false, error = r.cause.message ?: "Failed"
-                )
+                is Result.Ok -> {
+                    // success: clear form and stop "Saving…" label
+                    reset()
+                    onSuccess(r.value)
+                }
+                is Result.Err -> {
+                    _state.value = _state.value.copy(
+                        saving = false,
+                        error = r.cause.message ?: "Failed"
+                    )
+                }
             }
         }
     }

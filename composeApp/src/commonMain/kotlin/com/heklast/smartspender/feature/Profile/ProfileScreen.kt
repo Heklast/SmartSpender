@@ -2,36 +2,49 @@ package com.heklast.smartspender.feature.Profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.core.AppColors
 import com.heklast.smartspender.features.profile.presentation.ProfileViewModel
 import com.heklast.smartspender.core.data.remote.firebase.FirestoreProvider
+import com.heklast.smartspender.navigation.AppState
+import com.heklast.smartspender.navigation.Route
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.imePadding
 
-@Preview
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(appState: AppState) {
     var enabled by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var number by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf("") }
+    var uploading by remember { mutableStateOf(false) }
 
-    // Get the current UID (nullable)
-    val uid: String? = Firebase.auth.currentUser?.uid
+    // New password state & feedback message
+    var newPassword by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf<String?>(null) }
 
-    // If no user is signed in, show a friendly state and return early
+    val uid = Firebase.auth.currentUser?.uid
+
     if (uid == null) {
         Box(
             modifier = Modifier.fillMaxSize().background(AppColors.mint),
@@ -46,126 +59,152 @@ fun ProfileScreen() {
         return
     }
 
-    // Create the ViewModel with the non-null uid
     val vm = remember(uid) { ProfileViewModel(testUid = uid) }
     LaunchedEffect(Unit) { vm.load() }
     val user by vm.user.collectAsState()
 
-    // Reflect current user doc into the editable fields
     LaunchedEffect(user) {
         user?.let {
             username = it.fullName
             number = it.number?.toString() ?: ""
             email = it.email
+            imageUrl = it.imageURL
         }
     }
 
+    // image picker (expect/actual)
+    val launchPicker = rememberImagePicker { uriString -> imageUrl = uriString }
     val scope = rememberCoroutineScope()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.mint)
+        modifier = Modifier.fillMaxSize().background(AppColors.mint)
     ) {
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppColors.white, RoundedCornerShape(topStart = 70.dp, topEnd = 70.dp))
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .imePadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 32.dp)
         ) {
-            Spacer(modifier = Modifier.fillMaxSize(0.05f))
-            Text(
-                "My Profile",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(2.dp, 2.dp, 2.dp, 100.dp),
-                color = AppColors.black.copy(alpha = 0.9f),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.W600,
-                textAlign = TextAlign.Center
-            )
+            item {
+                Text(
+                    "My Profile",
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    color = AppColors.black.copy(alpha = 0.9f),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.W600,
+                    textAlign = TextAlign.Center
+                )
+            }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppColors.white, shape = RoundedCornerShape(70.dp))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
-                        Text(
-                            user?.fullName.orEmpty(),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(2.dp),
-                            color = AppColors.black.copy(alpha = 0.9f),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.W600,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
-                        Text(
-                            "Account Details",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(2.dp, 2.dp, 2.dp, 50.dp),
-                            color = AppColors.black.copy(alpha = 0.9f),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.W500,
-                        )
+            item {
+                AsyncImage(
+                    model = imageUrl.ifBlank { null },
+                    contentDescription = "Profile photo",
+                    modifier = Modifier.size(96.dp).clip(CircleShape).background(AppColors.lightGreen)
+                )
+                Spacer(Modifier.height(12.dp))
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .align(Alignment.CenterHorizontally)
-                        ) {
+                OutlinedButton(onClick = { launchPicker() }, enabled = !uploading) {
+                    Text(if (uploading) "Please wait…" else "Change Photo")
+                }
 
-                            ProfileTextField(
-                                label = "Username",
-                                value = username,
-                                onValueChange = { username = it },
-                                enabled = enabled
-                            )
-                            ProfileTextField(
-                                label = "Phone Number",
-                                value = number,
-                                onValueChange = { number = it },
-                                enabled = enabled
-                            )
-                            ProfileTextField(
-                                label = "Email",
-                                value = email,
-                                onValueChange = { email = it },
-                                enabled = enabled
-                            )
+                Spacer(Modifier.height(32.dp))
+            }
 
-                            Button(
-                                onClick = {
-                                    onUpdateButtonClick(
-                                        enabled = enabled,
-                                        setEnabled = { enabled = it },
-                                        save = {
-                                            scope.launch {
-                                                saveProfileToDb(
-                                                    uid = uid, // non-null here
-                                                    username = username,
-                                                    number = number,
-                                                    email = email
-                                                )
-                                                vm.load() // refresh after save
+            item {
+                Text(
+                    "Account Details",
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    color = AppColors.black.copy(alpha = 0.9f),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.W500
+                )
+            }
+
+            item { ProfileTextField("Username", username, { username = it }, enabled) }
+            item { ProfileTextField("Phone Number", number, { number = it }, enabled) }
+            item { ProfileTextField("Email", email, { email = it }, enabled) }
+
+            item {
+                if (enabled) {
+                    PasswordField(
+                        label = "New Password",
+                        value = newPassword,
+                        onValueChange = { newPassword = it }
+                    )
+                }
+            }
+
+            item {
+                Spacer(Modifier.height(24.dp))
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Button(
+                        onClick = {
+                            onUpdateButtonClick(enabled, { enabled = it }) {
+                                scope.launch {
+                                    message = null
+                                    try {
+                                        saveProfileToDb(
+                                            uid = uid,
+                                            username = username,
+                                            number = number,
+                                            email = email,
+                                            imageUrl = imageUrl
+                                        )
+                                        // 2) Change password if provided
+                                        if (newPassword.isNotBlank()) {
+                                            vm.changePassword(newPassword) { ok, err ->
+                                                message = if (ok) {
+                                                    newPassword = ""
+                                                    "Password updated successfully."
+                                                } else {
+                                                    err ?: "Failed to update password."
+                                                }
                                             }
+                                        } else {
+                                            message = "Profile updated."
                                         }
-                                    )
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AppColors.mint,
-                                    contentColor = AppColors.black
-                                ),
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) { Text(if (enabled) "Save" else "Update Profile") }
-                        }
+                                        vm.load()
+                                    } catch (t: Throwable) {
+                                        message = t.message ?: "Update failed."
+                                    }
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppColors.mint,
+                            contentColor = AppColors.black
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.6f)
+                    ) {
+                        Text(if (enabled) "Save" else "Update Profile")
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                message?.let {
+                    Text(
+                        it,
+                        color = if (it.contains("fail", true) || it.contains("error", true)) Color.Red else Color(0xFF2E7D32),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // Sign Out
+            item {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    OutlinedButton(
+                        onClick = {
+                            vm.signOut { appState.navigate(Route.Begin) }
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                        modifier = Modifier.fillMaxWidth(0.6f)
+                    ) {
+                        Text("Sign Out")
                     }
                 }
             }
@@ -177,19 +216,16 @@ private suspend fun saveProfileToDb(
     uid: String,
     username: String,
     number: String,
-    email: String
+    email: String,
+    imageUrl: String
 ) {
     val updates = buildMap<String, Any?> {
         put("fullName", username)
         put("email", email)
-        number.toIntOrNull()?.let { put("number", it) } // include only if valid
+        number.toIntOrNull()?.let { put("number", it) }
+        put("imageURL", imageUrl)
     }
-
-    // Use FirestoreProvider so settings are already applied once
-    FirestoreProvider.db
-        .collection("users")
-        .document(uid) // <- non-null String
-        .set(updates, merge = true)
+    FirestoreProvider.db.collection("users").document(uid).set(updates, merge = true)
 }
 
 @Composable
@@ -200,18 +236,44 @@ fun ProfileTextField(
     enabled: Boolean
 ) {
     Column(modifier = Modifier.padding(bottom = 20.dp)) {
-        Text(
-            label,
-            color = AppColors.black.copy(alpha = 0.9f),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.W500
-        )
-        Spacer(modifier = Modifier.height(10.dp))
+        Text(label, color = AppColors.black.copy(alpha = 0.9f), fontSize = 15.sp, fontWeight = FontWeight.W500)
+        Spacer(Modifier.height(10.dp))
         TextField(
             value = value,
             enabled = enabled,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = AppColors.lightGreen,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                disabledContainerColor = AppColors.lightGreen,
+            ),
+            shape = RoundedCornerShape(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun PasswordField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    var visible by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.padding(bottom = 20.dp)) {
+        Text(label, color = AppColors.black.copy(alpha = 0.9f), fontSize = 15.sp, fontWeight = FontWeight.W500)
+        Spacer(Modifier.height(10.dp))
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                TextButton(onClick = { visible = !visible }) { Text(if (visible) "Hide" else "Show") }
+            },
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = AppColors.lightGreen,
                 focusedIndicatorColor = Color.Transparent,
@@ -234,3 +296,6 @@ private fun onUpdateButtonClick(
         setEnabled(false)
     }
 }
+
+@Composable
+expect fun rememberImagePicker(onPicked: (String) -> Unit): () -> Unit

@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -18,7 +17,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -28,13 +27,12 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.activity.compose) // keep Android-only here
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
-
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -45,19 +43,25 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
             implementation("io.ktor:ktor-client-core:3.0.0")
             implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
             implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
+            implementation("io.ktor:ktor-client-logging:3.0.0")
+
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
             implementation("dev.gitlive:firebase-common:2.3.0")
             implementation("dev.gitlive:firebase-auth:2.3.0")
             implementation("dev.gitlive:firebase-firestore:2.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-            implementation("io.ktor:ktor-client-websockets:3.0.0")
-            implementation("io.ktor:ktor-server-websockets:3.0.0")
-            implementation("io.ktor:ktor-client-logging:3.0.0")
+
+            // ✅ Coil 3 (multiplatform) + Ktor3 network integration
+            implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
         }
-        iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.0.0") }
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:3.0.0")
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
@@ -93,16 +97,9 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    // Import the Firebase BoM
+
+    // Firebase BoM (Android)
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
-
-
-    // TODO: Add the dependencies for Firebase products you want to use
-    // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
-
-
-    // Add the dependencies for any other desired Firebase products
-    // https://firebase.google.com/docs/android/setup#available-libraries
+    // Add more Firebase Android deps as needed
 }
-
