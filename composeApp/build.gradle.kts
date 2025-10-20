@@ -54,9 +54,12 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
             // ✅ Multiplatform Firebase APIs (GitLive)
+            implementation("dev.gitlive:firebase-common:2.3.0")
             implementation("dev.gitlive:firebase-auth:2.3.0")
             implementation("dev.gitlive:firebase-firestore:2.3.0")
         }
