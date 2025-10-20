@@ -25,6 +25,7 @@ import com.heklast.smartspender.core.data.remote.firebase.signInIfNeeded
 import com.heklast.smartspender.feature.expense.add.AddExpenseScreen
 import com.heklast.smartspender.feature.expense.list.ExpensesListScreen
 
+
 @Composable
 @Preview
 fun App() {
