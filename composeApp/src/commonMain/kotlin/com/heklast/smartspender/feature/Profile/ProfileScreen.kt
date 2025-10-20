@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -32,8 +32,27 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 
+// ✅ Responsive helpers
+import com.heklast.smartspender.responsive.rememberWindowSize
+import com.heklast.smartspender.responsive.rememberDimens
+import com.heklast.smartspender.responsive.WidthClass
+
 @Composable
 fun ProfileScreen(appState: AppState) {
+    val win = rememberWindowSize()
+    val dims = rememberDimens(win)
+
+    val titleSize = when (win.width) {
+        WidthClass.Compact -> 22.sp
+        WidthClass.Medium -> 26.sp
+        WidthClass.Expanded -> 30.sp
+    }
+    val fieldWidth = when (win.width) {
+        WidthClass.Compact -> 0.9f
+        WidthClass.Medium -> 0.7f
+        WidthClass.Expanded -> 0.6f
+    }
+
     var enabled by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var number by remember { mutableStateOf("") }
@@ -41,7 +60,7 @@ fun ProfileScreen(appState: AppState) {
     var imageUrl by remember { mutableStateOf("") }
     var uploading by remember { mutableStateOf(false) }
 
-    // New password state & feedback message
+    var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
 
@@ -74,7 +93,6 @@ fun ProfileScreen(appState: AppState) {
         }
     }
 
-    // image picker (expect/actual)
     val launchPicker = rememberImagePicker { uriString -> imageUrl = uriString }
     val scope = rememberCoroutineScope()
 
@@ -88,14 +106,19 @@ fun ProfileScreen(appState: AppState) {
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 32.dp)
+            contentPadding = PaddingValues(
+                top = dims.gap * 6,
+                start = dims.padding,
+                end = dims.padding,
+                bottom = dims.gap * 8
+            )
         ) {
             item {
                 Text(
                     "My Profile",
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = dims.gap * 3),
                     color = AppColors.black.copy(alpha = 0.9f),
-                    fontSize = 22.sp,
+                    fontSize = titleSize,
                     fontWeight = FontWeight.W600,
                     textAlign = TextAlign.Center
                 )
@@ -105,117 +128,147 @@ fun ProfileScreen(appState: AppState) {
                 AsyncImage(
                     model = imageUrl.ifBlank { null },
                     contentDescription = "Profile photo",
-                    modifier = Modifier.size(96.dp).clip(CircleShape).background(AppColors.lightGreen)
+                    modifier = Modifier
+                        .size(
+                            when (win.width) {
+                                WidthClass.Compact -> 96.dp
+                                WidthClass.Medium -> 120.dp
+                                WidthClass.Expanded -> 140.dp
+                            }
+                        )
+                        .clip(CircleShape)
+                        .background(AppColors.lightGreen)
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(dims.gap * 2))
 
                 OutlinedButton(onClick = { launchPicker() }, enabled = !uploading) {
                     Text(if (uploading) "Please wait…" else "Change Photo")
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(dims.gap * 4))
             }
 
             item {
                 Text(
                     "Account Details",
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = dims.gap * 2),
                     color = AppColors.black.copy(alpha = 0.9f),
-                    fontSize = 20.sp,
+                    fontSize = (titleSize.value - 2).sp,
                     fontWeight = FontWeight.W500
                 )
             }
 
-            item { ProfileTextField("Username", username, { username = it }, enabled) }
-            item { ProfileTextField("Phone Number", number, { number = it }, enabled) }
-            item { ProfileTextField("Email", email, { email = it }, enabled) }
+            item { ProfileTextField("Username", username, { username = it }, enabled, fieldWidth) }
+            item { ProfileTextField("Phone Number", number, { number = it }, enabled, fieldWidth) }
+            item { ProfileTextField("Email", email, { email = it }, enabled, fieldWidth) }
 
             item {
                 if (enabled) {
+                    val hasPasswordProvider = Firebase.auth.currentUser
+                        ?.providerData?.any { it.providerId == "password" } == true
+
+                    if (hasPasswordProvider) {
+                        PasswordField(
+                            label = "Current Password",
+                            value = currentPassword,
+                            fieldWidth= fieldWidth,
+                            onValueChange = { currentPassword = it }
+                        )
+                    }
+
                     PasswordField(
-                        label = "New Password",
+                        label = if (hasPasswordProvider) "New Password" else "Set Password",
                         value = newPassword,
+                        fieldWidth= fieldWidth,
                         onValueChange = { newPassword = it }
                     )
                 }
             }
 
             item {
-                Spacer(Modifier.height(24.dp))
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Button(
-                        onClick = {
-                            onUpdateButtonClick(enabled, { enabled = it }) {
-                                scope.launch {
-                                    message = null
-                                    try {
-                                        saveProfileToDb(
-                                            uid = uid,
-                                            username = username,
-                                            number = number,
-                                            email = email,
-                                            imageUrl = imageUrl
+                Spacer(Modifier.height(dims.gap * 3))
+                Button(
+                    onClick = {
+                        onUpdateButtonClick(enabled, { enabled = it }) {
+                            scope.launch {
+                                message = null
+
+                                val userNow = Firebase.auth.currentUser
+                                if (userNow == null) {
+                                    message = "You’re signed out."
+                                    return@launch
+                                }
+
+                                try {
+                                    // Save Firestore profile
+                                    saveProfileToDb(uid, username, number, email, imageUrl)
+
+                                    if (newPassword.isNotBlank()) {
+                                        val hasPw = userNow.providerData.any { it.providerId == "password" }
+                                        val r = vm.updatePasswordOrLink(
+                                            email = email.trim(),
+                                            currentPassword = if (hasPw) currentPassword else null,
+                                            newPassword = newPassword
                                         )
-                                        if (newPassword.isNotBlank()) {
-                                            vm.changePassword(newPassword) { ok, err ->
-                                                message = if (ok) {
-                                                    newPassword = ""
-                                                    "Password updated successfully."
-                                                } else {
-                                                    err ?: "Failed to update password."
+                                        message = r.fold(
+                                            onSuccess = {
+                                                currentPassword = ""
+                                                newPassword = ""
+                                                "Password updated successfully."
+                                            },
+                                            onFailure = { err ->
+                                                when {
+                                                    err.message?.contains("requires-recent-login", true) == true ->
+                                                        "Please log in again and retry changing your password."
+                                                    err.message?.contains("administrator", true) == true ->
+                                                        "This account can’t change password here. Try linking email/password first."
+                                                    else -> err.message ?: "Failed to update password."
                                                 }
                                             }
-                                        } else {
-                                            message = "Profile updated."
-                                        }
-                                        vm.load()
-                                    } catch (t: Throwable) {
-                                        message = t.message ?: "Update failed."
+                                        )
+                                    } else {
+                                        message = "Profile updated."
                                     }
+
+                                    vm.load()
+                                } catch (t: Throwable) {
+                                    message = t.message ?: "Update failed."
                                 }
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppColors.mint,
-                            contentColor = AppColors.black
-                        ),
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Text(if (enabled) "Save" else "Update Profile")
-                    }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.mint,
+                        contentColor = AppColors.black
+                    ),
+                    modifier = Modifier.fillMaxWidth(fieldWidth)
+                ) {
+                    Text(if (enabled) "Save" else "Update Profile")
                 }
-                Spacer(Modifier.height(12.dp))
+
                 message?.let {
+                    Spacer(Modifier.height(dims.gap))
                     Text(
                         it,
-                        color = if (it.contains("fail", true) || it.contains("error", true)) Color.Red else Color(0xFF2E7D32),
+                        color = if (it.contains("fail", true) || it.contains("error", true))
+                            Color.Red else Color(0xFF2E7D32),
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(dims.gap * 2))
             }
 
-            // Sign Out
             item {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    OutlinedButton(
-                        onClick = {
-                            vm.signOut { appState.navigate(Route.Begin) }
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Text("Sign Out")
-                    }
+                OutlinedButton(
+                    onClick = { vm.signOut { appState.navigate(Route.Begin) } },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                    modifier = Modifier.fillMaxWidth(fieldWidth)
+                ) {
+                    Text("Sign Out")
                 }
-            }
 
-            // ↓↓↓ Ensure scroll room below content so BottomBar never covers it
-            item {
-                // Adds exact space for system/bottom bars…
+                Spacer(Modifier.height(dims.gap * 8))
                 Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
-                // …plus a little extra breathing room
-                Spacer(Modifier.height(80.dp))
             }
         }
     }
@@ -242,9 +295,10 @@ fun ProfileTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    fieldWidth: Float
 ) {
-    Column(modifier = Modifier.padding(bottom = 20.dp)) {
+    Column(modifier = Modifier.fillMaxWidth(fieldWidth).padding(bottom = 20.dp)) {
         Text(label, color = AppColors.black.copy(alpha = 0.9f), fontSize = 15.sp, fontWeight = FontWeight.W500)
         Spacer(Modifier.height(10.dp))
         TextField(
@@ -268,10 +322,11 @@ fun ProfileTextField(
 private fun PasswordField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    fieldWidth: Float
 ) {
     var visible by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.padding(bottom = 20.dp)) {
+    Column(modifier = Modifier.fillMaxWidth(fieldWidth).padding(bottom = 20.dp)) {
         Text(label, color = AppColors.black.copy(alpha = 0.9f), fontSize = 15.sp, fontWeight = FontWeight.W500)
         Spacer(Modifier.height(10.dp))
         TextField(
