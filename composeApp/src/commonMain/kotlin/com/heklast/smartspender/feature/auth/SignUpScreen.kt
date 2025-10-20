@@ -21,10 +21,8 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun SignUpScreen(
-    authService: AuthService,
-    onSignUpSuccess: () -> Unit = {},
-    onLoginClick: () -> Unit = {},
-    onError: (String) -> Unit = {}
+    onSignUpClick: () -> Unit = {},
+    onLoginClick: () -> Unit = {}
 ) {
     // States for inputs
     var fullName by remember { mutableStateOf("") }
@@ -68,10 +66,10 @@ fun SignUpScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            CustomTextField("Full Name", fullName, { fullName = it }, placeholderText = "John Doe", black, mint, inputBg)
-            CustomTextField("Email", email, { email = it }, placeholderText = "example@example.com", black, mint, inputBg, KeyboardType.Email)
-            CustomTextField("Mobile Number", mobile, { mobile = it }, placeholderText = "+123 456", black, mint, inputBg, KeyboardType.Phone)
-            CustomTextField("Date of Birth", dob, { dob = it }, placeholderText = "DD/MM/YYYY", black, mint, inputBg)
+            CustomTextField("Full Name", fullName, { fullName = it },placeholderText = "John Doe", black, mint, inputBg)
+            CustomTextField("Email", email, { email = it },placeholderText = "example@example.com", black, mint, inputBg, KeyboardType.Email)
+            CustomTextField("Mobile Number", mobile, { mobile = it },placeholderText = "+123 456", black, mint, inputBg, KeyboardType.Phone)
+            CustomTextField("Date of Birth", dob, { dob = it },placeholderText = "DD/MM/YYYY", black, mint, inputBg)
             CustomTextField("Password", password, { password = it }, placeholderText = "••••••••", black, mint, inputBg, isPassword = true)
             CustomTextField("Confirm Password", confirmPassword, { confirmPassword = it }, placeholderText = "••••••••", black, mint, inputBg, isPassword = true)
 
@@ -97,19 +95,7 @@ fun SignUpScreen(
 
             // Sign Up button
             Button(
-                onClick = {
-                    if (email.isNotBlank() && password.isNotBlank() && confirmPassword == password && agreedToTerms) {
-                        authService.signUp(email, password) { success, error ->
-                            if (success) {
-                                onSignUpSuccess()
-                            } else {
-                                onError(error ?: "Unknown error")
-                            }
-                        }
-                    } else {
-                        onError("Please fill all fields correctly and accept the terms")
-                    }
-                },
+                onClick = onSignUpClick,
                 modifier = Modifier
                     .width(170.dp)
                     .height(45.dp)
@@ -164,7 +150,7 @@ fun CustomTextField(
         color = labelColor,
         fontSize = 14.sp,
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth()            // <- replaced align(...) with fillMaxWidth()
             .padding(bottom = 4.dp),
         textAlign = TextAlign.Start
     )
@@ -180,7 +166,7 @@ fun CustomTextField(
         shape = RoundedCornerShape(14.dp),
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        placeholder = {
+        placeholder = {                               // ← add this
             Text(
                 text = placeholderText,
                 color = Color.LightGray,
@@ -196,3 +182,5 @@ fun CustomTextField(
         )
     )
 }
+
+
