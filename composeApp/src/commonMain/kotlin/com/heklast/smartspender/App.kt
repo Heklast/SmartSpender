@@ -19,11 +19,10 @@ import com.heklast.smartspender.features.auth.WelcomeScreen
 import com.heklast.smartspender.navigation.AppState
 import com.heklast.smartspender.navigation.Route
 
-// ✅ ADD: Firebase bootstrap helpers (KMP via GitLive)
-import com.heklast.smartspender.core.data.remote.firebase.enableOfflineCache
 import com.heklast.smartspender.core.data.remote.firebase.ensureUserDocCommon
 import com.heklast.smartspender.core.data.remote.firebase.signInIfNeeded
-
+import com.heklast.smartspender.feature.expense.add.AddExpenseScreen
+import com.heklast.smartspender.feature.expense.list.ExpensesListScreen
 
 @Composable
 @Preview
@@ -33,19 +32,17 @@ fun App() {
     val listVm = remember { com.heklast.smartspender.feature.expense.list.ExpensesListViewModel() }
     val formVm = remember { com.heklast.smartspender.feature.expense.add.ExpenseFormViewModel() }
 
-
-    // ✅ ADD: one-time Firebase bootstrap (anonymous sign-in + ensure /users/{uid} + offline cache)
+    // One-time bootstrap: anonymous sign-in (if needed) + ensure user doc.
     LaunchedEffect(Unit) {
-        // safe to call repeatedly; does nothing if already signed-in / doc exists
-        signInIfNeeded()
-        ensureUserDocCommon()
-        enableOfflineCache()
+       // signInIfNeeded()        // creates an anonymous user if none
+        //ensureUserDocCommon()   // creates/merges /users/{uid} = { ready: true }
+        // No Firestore settings calls and no explicit Firestore init here.
     }
 
     MaterialTheme {
         Scaffold(
             bottomBar = {
-                if (route == Route.Profile || route == Route.Statistics) {
+                if (route == Route.Profile || route == Route.Statistics || route == Route.About || route == Route.ExpensesList || route == Route.AddExpense ) {
                     BottomBar(
                         current = route,
                         onNavigate = { target -> appState.navigate(target) }
@@ -55,42 +52,31 @@ fun App() {
         ) {
             Surface {
                 when (route) {
-                    Route.Intro -> IntroScreen(
-                        onTimeout = { appState.navigate(Route.Begin) }
-                    )
-
+                    Route.Intro -> IntroScreen(onTimeout = { appState.navigate(Route.Begin) })
                     Route.Begin -> BeginScreen(appState)
-
                     Route.LogIn -> WelcomeScreen(
-                        onLoginClick = { appState.navigate(Route.Begin) },
+                        onLoginClick = { appState.navigate(Route.ExpensesList) },
                         onSignUpClick = { appState.navigate(Route.SignUp) },
                         onForgotPasswordClick = { appState.navigate(Route.ForgotPw) }
                     )
-
                     Route.SignUp -> SignUpScreen(
                         onLoginClick = { appState.navigate(Route.LogIn) },
-                        onSignUpClick = { appState.navigate(Route.Begin) }
+                        onSignUpClick = { appState.navigate(Route.Profile) }
                     )
-
                     Route.ForgotPw -> ForgotPasswordScreen(
                         onConfirmClick = { appState.navigate(Route.LogIn) }
                     )
-
                     Route.Profile -> ProfileScreen()
-
                     Route.Statistics -> StatisticsScreen()
-
                     Route.About -> AboutScreen()
-
-                    Route.ExpensesList -> com.heklast.smartspender.feature.expense.list.ExpensesListScreen(
+                    Route.ExpensesList -> ExpensesListScreen(
                         vm = listVm,
                         onAddClick = { appState.navigate(Route.AddExpense) }
                     )
-
-                    Route.AddExpense -> com.heklast.smartspender.feature.expense.add.AddExpenseScreen(
+                    Route.AddExpense -> AddExpenseScreen(
                         vm = formVm,
                         onSaved = {
-                            listVm.refresh()         // refresh list after save
+                            listVm.refresh()
                             appState.navigate(Route.ExpensesList)
                         },
                         onCancel = { appState.navigate(Route.ExpensesList) }

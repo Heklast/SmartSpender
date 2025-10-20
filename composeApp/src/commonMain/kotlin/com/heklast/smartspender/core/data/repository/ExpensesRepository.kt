@@ -1,12 +1,11 @@
 package com.heklast.smartspender.core.data
 
 import com.heklast.smartspender.core.domain.model.Expense
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.firestore.firestore
+import com.heklast.smartspender.core.data.remote.firebase.FirestoreProvider
 
 object ExpensesRepository {
     suspend fun getExpensesForUser(uid: String): List<Expense> {
-        val snap = Firebase.firestore
+        val snap = FirestoreProvider.db
             .collection("users")
             .document(uid)
             .collection("expenses")

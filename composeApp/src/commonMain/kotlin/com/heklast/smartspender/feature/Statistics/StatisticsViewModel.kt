@@ -42,7 +42,7 @@ class StatisticsViewModel(
                 val expenses: List<Expense> = ExpensesRepository.getExpensesForUser(uid)
 
                 val grouped = expenses
-                    .groupBy { it.category.ifBlank { "Uncategorized" } }
+                    .groupBy { it.category }
                     .map { (cat, items) ->
                         InputSlice(category = cat, value = items.sumOf { it.amount })
                     }

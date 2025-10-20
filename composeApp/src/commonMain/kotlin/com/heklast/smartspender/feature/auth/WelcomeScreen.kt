@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,22 +15,38 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.heklast.smartspender.core.auth.AuthRepository
+import com.heklast.smartspender.core.data.remote.firebase.FirestoreProvider
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
+import kotlinx.coroutines.launch
 
 @Composable
 fun WelcomeScreen(
-    authService: AuthService,
-    onLoginSuccess: () -> Unit = {},
+    onLoginClick: () -> Unit = {},          // navigate after successful login
     onForgotPasswordClick: () -> Unit = {},
-    onSignUpClick: () -> Unit = {},
-    onError: (String) -> Unit = {}
+    onSignUpClick: () -> Unit = {}
 ) {
-    var username by remember { mutableStateOf("") }
+    // State
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var errorText by remember { mutableStateOf<String?>(null) }
 
+    // Colors
     val mint = Color(0xFF3aB09E)
     val mintLight = Color(0xFFDFF7EB)
     val inputBg = Color(0xFFF2F5F4)
     val black = Color(0xFF000000)
+
+    val scope = rememberCoroutineScope()
+
+    fun validate(): String? {
+        if (email.isBlank() || !email.contains("@")) return "Enter a valid email."
+        if (password.isBlank()) return "Password is required."
+        return null
+    }
 
     Column(
         modifier = Modifier
@@ -61,22 +76,102 @@ fun WelcomeScreen(
             verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
             // Email
-            CustomTextField("Username or Email", username, { username = it }, "example@example.com", black, mint, inputBg, KeyboardType.Email)
-            // Password
-            CustomTextField("Password", password, { password = it }, "••••••••", black, mint, inputBg, KeyboardType.Password, isPassword = true)
+            Text(
+                text = "Email",
+                color = black,
+                fontSize = 14.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
+                    .height(48.dp)
+                    .background(inputBg, shape = RoundedCornerShape(14.dp)),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = inputBg,
+                    unfocusedContainerColor = inputBg,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                )
+            )
 
+            // Password
+            Text(
+                text = "Password",
+                color = black,
+                fontSize = 14.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .padding(bottom = 8.dp)
+                    .background(inputBg, shape = RoundedCornerShape(12.dp)),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = inputBg,
+                    unfocusedContainerColor = inputBg,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                )
+            )
+
+            // Error text (if any)
+            if (errorText != null) {
+                Text(
+                    text = errorText!!,
+                    color = Color(0xFFD32F2F),
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    textAlign = TextAlign.Start
+                )
+            }
+
+            // Login
             Button(
+                enabled = !loading,
                 onClick = {
-                    if (username.isNotBlank() && password.isNotBlank()) {
-                        authService.login(username, password) { success, error ->
-                            if (success) {
-                                onLoginSuccess()
-                            } else {
-                                onError(error ?: "Unknown error")
+                    errorText = validate()
+                    if (errorText != null) return@Button
+
+                    scope.launch {
+                        loading = true
+                        errorText = null
+
+                        val res = AuthRepository.signIn(email.trim(), password)
+                        res.onFailure { t ->
+                            loading = false
+                            errorText = t.message ?: "Login failed."
+                            return@launch
+                        }
+
+                        // Ensure /users/{uid} exists and mark ready
+                        val uid = Firebase.auth.currentUser?.uid
+                        if (uid != null) {
+                            runCatching {
+                                FirestoreProvider.db
+                                    .collection("users")
+                                    .document(uid)
+                                    .set(mapOf("ready" to true, "email" to email.trim()), merge = true)
                             }
                         }
-                    } else {
-                        onError("Please fill in both fields")
+
+                        loading = false
+                        onLoginClick()
                     }
                 },
                 modifier = Modifier
@@ -84,9 +179,14 @@ fun WelcomeScreen(
                     .height(42.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = mint)
             ) {
-                Text("Log In", color = black, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = if (loading) "Please wait…" else "Log In",
+                    color = black,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
+            // Forgot Password
             Text(
                 text = "Forgot Password?",
                 color = mint,
@@ -99,11 +199,12 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Sign up
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Don’t have an account? ", color = black, fontSize = 14.sp)
+                Text(text = "Don’t have an account? ", color = black, fontSize = 14.sp)
                 Text(
                     text = "Sign Up",
                     color = mint,
