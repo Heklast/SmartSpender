@@ -34,6 +34,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -52,7 +53,11 @@ kotlin {
             implementation("dev.gitlive:firebase-auth:2.3.0")
             implementation("dev.gitlive:firebase-firestore:2.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("io.ktor:ktor-client-websockets:3.0.0")
+            implementation("io.ktor:ktor-server-websockets:3.0.0")
+            implementation("io.ktor:ktor-client-logging:3.0.0")
         }
+        iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.0.0") }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

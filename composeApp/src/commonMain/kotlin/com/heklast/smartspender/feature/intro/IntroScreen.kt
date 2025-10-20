@@ -18,19 +18,15 @@ import org.smartspender.project.core.AppColors
 import smartspender.composeapp.generated.resources.Res
 import smartspender.composeapp.generated.resources.light
 import androidx.compose.runtime.*
-import com.heklast.smartspender.core.data.remote.ApiService
+
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun IntroScreen(onTimeout: () -> Unit, apiService: ApiService = ApiService()) {
-    var advice by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("Loading advice...") }
+fun IntroScreen(onTimeout: () -> Unit) {
+
     LaunchedEffect(Unit) {
-        try {
-            advice = apiService.getRandomAdvice()
-        } catch (e: Exception) {
-            advice = "Failed to fetch advice."
-        }
+
 
         // Existing timeout
         kotlinx.coroutines.delay(3_000)
@@ -66,13 +62,7 @@ fun IntroScreen(onTimeout: () -> Unit, apiService: ApiService = ApiService()) {
                     textAlign = TextAlign.Center
                 )
             }
-            Text(
-                text = advice,
-                color = AppColors.black.copy(alpha = 0.8f),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
+
 
             Spacer(modifier = Modifier.height(8.dp))
 
