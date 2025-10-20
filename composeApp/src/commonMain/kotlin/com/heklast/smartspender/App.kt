@@ -42,7 +42,7 @@ fun App() {
     MaterialTheme {
         Scaffold(
             bottomBar = {
-                if (route == Route.Profile || route == Route.Statistics || route == Route.About ) {
+                if (route == Route.Profile || route == Route.Statistics || route == Route.About || route == Route.ExpensesList || route == Route.AddExpense ) {
                     BottomBar(
                         current = route,
                         onNavigate = { target -> appState.navigate(target) }
