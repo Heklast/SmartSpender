@@ -9,6 +9,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.Timestamp
+import dev.gitlive.firebase.firestore.Source   // ⬅ add
 import dev.gitlive.firebase.firestore.toMilliseconds
 import kotlinx.datetime.Instant
 import kotlin.math.round
@@ -26,7 +27,7 @@ class FirebaseExpenseApi : ExpenseApi {
     private fun CreateExpenseRequest.toMap(): Map<String, Any?> = mapOf(
         "title" to title,
         "amount" to round2(amount),
-        "date" to Instant.fromEpochMilliseconds(dateEpochMs), // kotlinx.datetime.Instant
+        "date" to Instant.fromEpochMilliseconds(dateEpochMs),
         "category" to category,
         "notes" to notes,
         "tags" to (tags ?: emptyList<String>())
@@ -59,14 +60,19 @@ class FirebaseExpenseApi : ExpenseApi {
     }
 
     override suspend fun create(request: CreateExpenseRequest): Result<String> = try {
-        val ref = expensesCol().add(request.toMap())
+        val ref = expensesCol().add(request.toMap())   // offline: writes go to local queue & sync later
         Result.Ok(ref.id)
     } catch (t: Throwable) {
         Result.Err(t)
     }
 
     override suspend fun get(id: String): Result<ExpenseResponse> = try {
-        val snap = expensesCol().document(id).get()
+        // ▶ try server, then cache
+        val snap = try {
+            expensesCol().document(id).get(Source.DEFAULT)
+        } catch (_: Throwable) {
+            expensesCol().document(id).get(Source.CACHE)
+        }
         Result.Ok(docToResponse(snap))
     } catch (t: Throwable) {
         Result.Err(t)
@@ -84,23 +90,28 @@ class FirebaseExpenseApi : ExpenseApi {
         if (fromEpochMs != null) q = q.where { "date" greaterThanOrEqualTo Instant.fromEpochMilliseconds(fromEpochMs) }
         if (toEpochMs != null) q = q.where { "date" lessThan Instant.fromEpochMilliseconds(toEpochMs) }
 
-        val snap = q.limit(limit + offset).get()
-        val items = snap.documents.drop(offset).map { d -> docToResponse(d) }
+        // ▶ try server, then cache
+        val snap = try {
+            q.limit(limit + offset).get(Source.DEFAULT)
+        } catch (_: Throwable) {
+            q.limit(limit + offset).get(Source.CACHE)
+        }
 
+        val items = snap.documents.drop(offset).map { d -> docToResponse(d) }
         Result.Ok(ListExpensesResponse(items = items, total = null))
     } catch (t: Throwable) {
         Result.Err(t)
     }
 
     override suspend fun update(id: String, request: CreateExpenseRequest): Result<Unit> = try {
-        expensesCol().document(id).set(request.toMap(), merge = true)
+        expensesCol().document(id).set(request.toMap(), merge = true)  // offline: queued
         Result.Ok(Unit)
     } catch (t: Throwable) {
         Result.Err(t)
     }
 
     override suspend fun delete(id: String): Result<Unit> = try {
-        expensesCol().document(id).delete()
+        expensesCol().document(id).delete()  // offline: queued
         Result.Ok(Unit)
     } catch (t: Throwable) {
         Result.Err(t)
