@@ -17,13 +17,26 @@ import org.jetbrains.compose.resources.painterResource
 import org.smartspender.project.core.AppColors
 import smartspender.composeapp.generated.resources.Res
 import smartspender.composeapp.generated.resources.light
+import androidx.compose.runtime.*
+import com.heklast.smartspender.core.data.remote.ApiService
+import kotlinx.coroutines.launch
+
 
 @Composable
-fun IntroScreen(onTimeout: () -> Unit) {
+fun IntroScreen(onTimeout: () -> Unit, apiService: ApiService = ApiService()) {
+    var advice by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("Loading advice...") }
     LaunchedEffect(Unit) {
-        delay(3_000)
+        try {
+            advice = apiService.getRandomAdvice()
+        } catch (e: Exception) {
+            advice = "Failed to fetch advice."
+        }
+
+        // Existing timeout
+        kotlinx.coroutines.delay(3_000)
         onTimeout()
     }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -54,6 +67,8 @@ fun IntroScreen(onTimeout: () -> Unit) {
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "Let's be smarter together!",
                 modifier = Modifier
@@ -62,6 +77,14 @@ fun IntroScreen(onTimeout: () -> Unit) {
                 color = AppColors.lightGreen.copy(alpha = 0.9f),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = advice,
+                color = AppColors.lightGreen.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center
             )
         }

@@ -24,9 +24,11 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun SignUpScreen(
-    onSignUpClick: () -> Unit = {},   // navigate after success
+    onSignUpClick: () -> Unit = {},
+
     onLoginClick: () -> Unit = {}
 ) {
     // Inputs
