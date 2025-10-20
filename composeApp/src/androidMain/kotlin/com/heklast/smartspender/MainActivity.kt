@@ -1,4 +1,4 @@
-// androidApp/src/androidMain/kotlin/com/heklast/smartspender/MainActivity.kt
+
 package com.heklast.smartspender
 
 import android.os.Bundle

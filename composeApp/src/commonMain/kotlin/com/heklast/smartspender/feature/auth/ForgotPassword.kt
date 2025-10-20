@@ -11,17 +11,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ForgotPasswordScreen(
-    onConfirmClick: () -> Unit = {}
+    authService: AuthService,
+    onConfirmClick: () -> Unit = {},
+    onError: (String) -> Unit = {}
 ) {
-    // States for inputs
     var email by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     // Colors
     val mint = Color(0xFF3aB09E)
@@ -36,7 +41,6 @@ fun ForgotPasswordScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Title
         Text(
             text = "Forgot Password",
             fontSize = 32.sp,
@@ -45,10 +49,9 @@ fun ForgotPasswordScreen(
             modifier = Modifier
                 .padding(top = 48.dp, bottom = 24.dp)
                 .fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
 
-        // Container for content
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -58,7 +61,6 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            // Text instructions
             Text(
                 text = "Reset Password?",
                 fontSize = 20.sp,
@@ -79,12 +81,47 @@ fun ForgotPasswordScreen(
             )
 
             // Email and new password fields
-            CustomTextField("Email", email, { email = it }, placeholderText = "example@example.com", labelColor = black, borderColor = mint, backgroundColor = inputBg, keyboardType = KeyboardType.Email)
-            CustomTextField("New Password", newPassword, { newPassword = it }, placeholderText = "••••••••", labelColor = black, borderColor = mint, backgroundColor = inputBg, isPassword = true)
+            CustomTextField(
+                label = "Email",
+                value = email,
+                onValueChange = { email = it },
+                placeholderText = "example@example.com",
+                labelColor = black,
+                borderColor = mint,
+                backgroundColor = inputBg,
+                keyboardType = KeyboardType.Email
+            )
+            CustomTextField(
+                label = "New Password",
+                value = newPassword,
+                onValueChange = { newPassword = it },
+                placeholderText = "••••••••",
+                labelColor = black,
+                borderColor = mint,
+                backgroundColor = inputBg,
+                isPassword = true
+            )
 
             // Confirm button
             Button(
-                onClick = onConfirmClick,
+                onClick = {
+                    if (email.isNotBlank() && newPassword.isNotBlank()) {
+                        isLoading = true
+                        CoroutineScope(Dispatchers.Main).launch {
+                            authService.resetPassword(email, newPassword) { success, error ->
+                                isLoading = false
+                                if (success) {
+                                    onConfirmClick()
+                                } else {
+                                    onError(error ?: "Failed to reset password")
+                                }
+                            }
+                        }
+                    } else {
+                        onError("Please fill all fields")
+                    }
+                },
+                enabled = !isLoading,
                 modifier = Modifier
                     .width(180.dp)
                     .height(75.dp)
@@ -92,7 +129,7 @@ fun ForgotPasswordScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = mint)
             ) {
                 Text(
-                    text = "Confirm Password",
+                    text = if (isLoading) "Please wait..." else "Confirm Password",
                     color = black,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -100,3 +137,6 @@ fun ForgotPasswordScreen(
         }
     }
 }
+
+
+

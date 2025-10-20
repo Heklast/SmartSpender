@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,23 +16,21 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
-
 
 @Composable
 fun WelcomeScreen(
-    onLoginClick: () -> Unit = {},
+    authService: AuthService,
+    onLoginSuccess: () -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
-    onSignUpClick: () -> Unit = {}
+    onSignUpClick: () -> Unit = {},
+    onError: (String) -> Unit = {}
 ) {
-    // State for text fields
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Colors
     val mint = Color(0xFF3aB09E)
-    val mintLight = Color(0xFFDFF7EB)      // slightly greenish background for container
-    val inputBg = Color(0xFFF2F5F4)        // light mint-gray background for text fields
+    val mintLight = Color(0xFFDFF7EB)
+    val inputBg = Color(0xFFF2F5F4)
     val black = Color(0xFF000000)
 
     Column(
@@ -41,7 +40,6 @@ fun WelcomeScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top section — Welcome text
         Text(
             text = "Welcome!",
             fontSize = 36.sp,
@@ -52,7 +50,6 @@ fun WelcomeScreen(
                 .align(Alignment.CenterHorizontally)
         )
 
-        // White container below
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -62,76 +59,34 @@ fun WelcomeScreen(
                 .padding(top = 65.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(15.dp)
-
         ) {
-            // Username label + field
-            Text(
-                text = "Username or Email",
-                color = black,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 19.dp)
-                    .height(35.dp)
-                    .background(inputBg, shape = RoundedCornerShape(14.dp)),
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = inputBg,
-                    unfocusedContainerColor = inputBg,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                )
-            )
+            // Email
+            CustomTextField("Username or Email", username, { username = it }, "example@example.com", black, mint, inputBg, KeyboardType.Email)
+            // Password
+            CustomTextField("Password", password, { password = it }, "••••••••", black, mint, inputBg, KeyboardType.Password, isPassword = true)
 
-            // Password label + field
-            Text(
-                text = "Password",
-                color = black,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(55.dp)
-                    .padding(bottom = 28.dp)
-                    .background(inputBg, shape = RoundedCornerShape(12.dp)),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = inputBg,
-                    unfocusedContainerColor = inputBg,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                )
-            )
-
-            // Login button
             Button(
-                onClick = onLoginClick,
+                onClick = {
+                    if (username.isNotBlank() && password.isNotBlank()) {
+                        authService.login(username, password) { success, error ->
+                            if (success) {
+                                onLoginSuccess()
+                            } else {
+                                onError(error ?: "Unknown error")
+                            }
+                        }
+                    } else {
+                        onError("Please fill in both fields")
+                    }
+                },
                 modifier = Modifier
                     .width(170.dp)
                     .height(42.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = mint)
             ) {
-                Text(
-                    text = "Log In",
-                    color = black,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("Log In", color = black, fontWeight = FontWeight.SemiBold)
             }
 
-            // Forgot Password link
             Text(
                 text = "Forgot Password?",
                 color = mint,
@@ -144,12 +99,11 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Sign up link
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Don’t have an account? ", color = black, fontSize = 14.sp)
+                Text("Don’t have an account? ", color = black, fontSize = 14.sp)
                 Text(
                     text = "Sign Up",
                     color = mint,
@@ -161,4 +115,3 @@ fun WelcomeScreen(
         }
     }
 }
-
