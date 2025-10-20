@@ -2,6 +2,7 @@ package com.heklast.smartspender.feature.Statistics
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -17,6 +18,9 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.core.AppColors
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.navigationBars
 
 @Preview
 @Composable
@@ -38,7 +42,7 @@ fun StatisticsScreen() {
         return
     }
 
-    // Create the VM tied to this uid (your VM already supports testUid)
+    // Create the VM tied to this uid
     val vm = remember(uid) { StatisticsViewModel(testUid = uid) }
     LaunchedEffect(uid) { vm.load() }
 
@@ -51,64 +55,71 @@ fun StatisticsScreen() {
             .fillMaxSize()
             .background(AppColors.mint)
     ) {
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.fillMaxSize(0.05f))
-            Text(
-                "Analysis",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(2.dp, 2.dp, 2.dp, 40.dp),
-                color = AppColors.black.copy(alpha = 0.9f),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.W600,
-                textAlign = TextAlign.Center
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppColors.mint),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(
+                top = 48.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 32.dp
             )
-
-            // Optional quick summary above the chart
-            pie.forEach { slice ->
-                Row(
-                    Modifier
+        ) {
+            item {
+                Text(
+                    "Analysis",
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 70.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(slice.category.name)
-                    Text(": ")
-                    Text("€${slice.value}")
+                        .padding(bottom = 40.dp),
+                    color = AppColors.black.copy(alpha = 0.9f),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.W600,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Show category list summary
+            if (pie.isNotEmpty()) {
+                items(pie.size) { index ->
+                    val slice = pie[index]
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(slice.category.name)
+                        Text(": ")
+                        Text("€${slice.value}")
+                    }
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppColors.white, shape = RoundedCornerShape(70.dp))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.white, shape = RoundedCornerShape(70.dp))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp)
-                    ) {
-                        Spacer(modifier = Modifier.height(100.dp))
-
-                        when {
-                            loading -> CircularProgressIndicator()
-                            error != null -> Text("Error: $error")
-                            else -> PieChart(
-                                dataRaw = pie,
-                                title = "Spending by Category",
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                    when {
+                        loading -> CircularProgressIndicator()
+                        error != null -> Text("Error: $error")
+                        else -> PieChart(
+                            dataRaw = pie,
+                            title = "Spending by Category",
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
+            }
+
+            item {
+                Spacer(Modifier.height(80.dp))
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         }
     }

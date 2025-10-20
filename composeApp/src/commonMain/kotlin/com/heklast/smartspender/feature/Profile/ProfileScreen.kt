@@ -29,6 +29,8 @@ import com.heklast.smartspender.navigation.Route
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 
 @Composable
 fun ProfileScreen(appState: AppState) {
@@ -154,7 +156,6 @@ fun ProfileScreen(appState: AppState) {
                                             email = email,
                                             imageUrl = imageUrl
                                         )
-                                        // 2) Change password if provided
                                         if (newPassword.isNotBlank()) {
                                             vm.changePassword(newPassword) { ok, err ->
                                                 message = if (ok) {
@@ -207,6 +208,14 @@ fun ProfileScreen(appState: AppState) {
                         Text("Sign Out")
                     }
                 }
+            }
+
+            // ↓↓↓ Ensure scroll room below content so BottomBar never covers it
+            item {
+                // Adds exact space for system/bottom bars…
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+                // …plus a little extra breathing room
+                Spacer(Modifier.height(80.dp))
             }
         }
     }
