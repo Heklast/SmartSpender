@@ -17,66 +17,84 @@ import org.jetbrains.compose.resources.painterResource
 import org.smartspender.project.core.AppColors
 import smartspender.composeapp.generated.resources.Res
 import smartspender.composeapp.generated.resources.light
-import androidx.compose.runtime.*
 
-import kotlinx.coroutines.launch
-
+// responsive helpers
+import com.heklast.smartspender.responsive.rememberWindowSize
+import com.heklast.smartspender.responsive.rememberDimens
+import com.heklast.smartspender.responsive.WidthClass
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun IntroScreen(onTimeout: () -> Unit) {
-
+    // navigate away after 3s
     LaunchedEffect(Unit) {
-
-
-        // Existing timeout
-        kotlinx.coroutines.delay(3_000)
+        delay(3_000)
         onTimeout()
     }
 
-        Box(
+    // responsive tokens
+    val win = rememberWindowSize()
+    val dims = rememberDimens(win)
+
+    val titleSize = when (win.width) {
+        WidthClass.Compact  -> 28.sp
+        WidthClass.Medium   -> 34.sp
+        WidthClass.Expanded -> 40.sp
+    }
+    val taglineSize = when (win.width) {
+        WidthClass.Compact  -> 16.sp
+        WidthClass.Medium   -> 18.sp
+        WidthClass.Expanded -> 20.sp
+    }
+    val logoWidthFraction = when (win.width) {
+        WidthClass.Compact  -> 0.45f
+        WidthClass.Medium   -> 0.35f
+        WidthClass.Expanded -> 0.28f
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.mint)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = dims.padding)
+    ) {
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(AppColors.mint)
+                .align(Alignment.Center)
+                .wrapContentHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            Image(
+                painter = painterResource(Res.drawable.light),
+                contentDescription = "SmartSpender logo",
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .wrapContentHeight(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.light),
-                    contentDescription = "SmartSpender logo",
-                    modifier = Modifier
-                        .fillMaxWidth(0.45f)
-                        .aspectRatio(1f)
-                )
+                    .fillMaxWidth(logoWidthFraction)
+                    .aspectRatio(1f)
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "SmartSpender",
-                    color = AppColors.lightGreen,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dims.gap * 2))
 
             Text(
-                text = "Let's be smarter together!",
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth().padding(30.dp),
-                color = AppColors.lightGreen.copy(alpha = 0.9f),
-                fontSize = 20.sp,
+                text = "SmartSpender",
+                color = AppColors.lightGreen,
+                fontSize = titleSize,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
-
-
         }
+
+        Text(
+            text = "Let's be smarter together!",
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = dims.padding, vertical = dims.gap * 3),
+            color = AppColors.lightGreen.copy(alpha = 0.9f),
+            fontSize = taglineSize,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
     }
+}

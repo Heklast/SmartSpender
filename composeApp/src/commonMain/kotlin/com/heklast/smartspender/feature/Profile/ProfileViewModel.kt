@@ -5,10 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.heklast.smartspender.core.data.UserRepository
 import com.heklast.smartspender.core.domain.model.User
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.EmailAuthProvider
+import dev.gitlive.firebase.auth.FirebaseAuthException
 import dev.gitlive.firebase.auth.auth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 class ProfileViewModel(
     private val testUid: String? = null
@@ -51,6 +56,43 @@ class ProfileViewModel(
         viewModelScope.launch {
             Firebase.auth.signOut() // suspend
             onSignedOut()
+        }
+    }
+    suspend fun updatePasswordOrLink(
+        email: String,
+        currentPassword: String?, // null if linking for the first time
+        newPassword: String
+    ): Result<Unit> = withContext(Dispatchers.Default) {
+        val user = Firebase.auth.currentUser ?: return@withContext Result.failure(
+            IllegalStateException("Not signed in")
+        )
+
+        try {
+            val hasPasswordProvider = user.providerData.any { it.providerId == "password" }
+
+            if (hasPasswordProvider) {
+                // must reauthenticate before updating password
+                if (currentPassword.isNullOrBlank()) {
+                    return@withContext Result.failure(
+                        IllegalArgumentException("Enter your current password to change it.")
+                    )
+                }
+                val cred = EmailAuthProvider.credential(email, currentPassword)
+                user.reauthenticate(cred)
+                user.updatePassword(newPassword)
+            } else {
+                // first time adding a password (anonymous or social login)
+                val cred = EmailAuthProvider.credential(email, newPassword)
+                user.linkWithCredential(cred)
+            }
+
+            Result.success(Unit)
+        } catch (ce: CancellationException) {
+            throw ce
+        } catch (e: FirebaseAuthException) {
+            Result.failure(e)
+        } catch (t: Throwable) {
+            Result.failure(t)
         }
     }
 }

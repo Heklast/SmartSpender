@@ -3,6 +3,8 @@ package com.heklast.smartspender.features.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,22 +15,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.heklast.smartspender.core.auth.AuthRepository
 import com.heklast.smartspender.core.data.remote.firebase.FirestoreProvider
+import com.heklast.smartspender.responsive.WidthClass
+import com.heklast.smartspender.responsive.rememberDimens
+import com.heklast.smartspender.responsive.rememberWindowSize
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.launch
 
 @Composable
 fun WelcomeScreen(
-    onLoginClick: () -> Unit = {},          // navigate after successful login
-    onForgotPasswordClick: () -> Unit = {},
+    onLoginClick: () -> Unit = {},
     onSignUpClick: () -> Unit = {}
 ) {
-    // State
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
@@ -42,176 +45,199 @@ fun WelcomeScreen(
 
     val scope = rememberCoroutineScope()
 
+    // Responsive tokens
+    val win = rememberWindowSize()
+    val dims = rememberDimens(win)
+    val isWide = win.width >= WidthClass.Medium
+    val titleSize = if (isWide) 38.sp else 36.sp
+    val labelSize = if (isWide) 16.sp else 14.sp
+    val bodySize  = if (isWide) 15.sp else 14.sp
+
     fun validate(): String? {
         if (email.isBlank() || !email.contains("@")) return "Enter a valid email."
         if (password.isBlank()) return "Password is required."
         return null
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(mint)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .imePadding()
     ) {
-        Text(
-            text = "Welcome!",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold,
-            color = black,
+        Box(
             modifier = Modifier
-                .padding(top = 48.dp, bottom = 32.dp)
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .weight(1f)
-                .background(mintLight, shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
-                .padding(top = 65.dp, start = 24.dp, end = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(15.dp)
+                .fillMaxSize()
+                .padding(horizontal = if (isWide) dims.padding else 0.dp),
+            contentAlignment = if (isWide) Alignment.TopCenter else Alignment.TopStart
         ) {
-            // Email
-            Text(
-                text = "Email",
-                color = black,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+            val maxContentWidth = if (isWide) 720.dp else Dp.Unspecified
+
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-                    .height(48.dp)
-                    .background(inputBg, shape = RoundedCornerShape(14.dp)),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = inputBg,
-                    unfocusedContainerColor = inputBg,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                )
-            )
+                    .then(if (maxContentWidth != Dp.Unspecified) Modifier.width(maxContentWidth) else Modifier)
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = dims.padding, vertical = dims.padding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(bottom = dims.padding * 2)
+            ) {
+                item {
+                    Text(
+                        text = "Welcome!",
+                        fontSize = titleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = black,
+                        modifier = Modifier
+                            .padding(top = 32.dp, bottom = dims.gap * 3)
+                            .align(Alignment.Center),
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            // Password
-            Text(
-                text = "Password",
-                color = black,
-                fontSize = 14.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .padding(bottom = 8.dp)
-                    .background(inputBg, shape = RoundedCornerShape(12.dp)),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = inputBg,
-                    unfocusedContainerColor = inputBg,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                )
-            )
+                item {
+                    Surface(
+                        color = mintLight,
+                        shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 48.dp, start = dims.padding, end = dims.padding, bottom = dims.padding),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(dims.gap * 1.5f)
+                        ) {
+                            Text(
+                                text = "Email",
+                                color = black,
+                                fontSize = labelSize,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            OutlinedTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(inputBg, shape = RoundedCornerShape(14.dp)),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = inputBg,
+                                    unfocusedContainerColor = inputBg,
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedBorderColor = Color.Transparent
+                                )
+                            )
 
-            // Error text (if any)
-            if (errorText != null) {
-                Text(
-                    text = errorText!!,
-                    color = Color(0xFFD32F2F),
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp),
-                    textAlign = TextAlign.Start
-                )
-            }
+                            Text(
+                                text = "Password",
+                                color = black,
+                                fontSize = labelSize,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            OutlinedTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(inputBg, shape = RoundedCornerShape(12.dp)),
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = inputBg,
+                                    unfocusedContainerColor = inputBg,
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedBorderColor = Color.Transparent
+                                )
+                            )
 
-            // Login
-            Button(
-                enabled = !loading,
-                onClick = {
-                    errorText = validate()
-                    if (errorText != null) return@Button
+                            if (errorText != null) {
+                                Text(
+                                    text = errorText!!,
+                                    color = Color(0xFFD32F2F),
+                                    fontSize = bodySize,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 4.dp),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
 
-                    scope.launch {
-                        loading = true
-                        errorText = null
+                            Button(
+                                enabled = !loading,
+                                onClick = {
+                                    errorText = validate()
+                                    if (errorText != null) return@Button
 
-                        val res = AuthRepository.signIn(email.trim(), password)
-                        res.onFailure { t ->
-                            loading = false
-                            errorText = t.message ?: "Login failed."
-                            return@launch
-                        }
+                                    scope.launch {
+                                        loading = true
+                                        errorText = null
 
-                        // Ensure /users/{uid} exists and mark ready
-                        val uid = Firebase.auth.currentUser?.uid
-                        if (uid != null) {
-                            runCatching {
-                                FirestoreProvider.db
-                                    .collection("users")
-                                    .document(uid)
-                                    .set(mapOf("ready" to true, "email" to email.trim()), merge = true)
+                                        val res = AuthRepository.signIn(email.trim(), password)
+                                        res.onFailure { t ->
+                                            loading = false
+                                            errorText = t.message ?: "Login failed."
+                                            return@launch
+                                        }
+
+                                        val uid = Firebase.auth.currentUser?.uid
+                                        if (uid != null) {
+                                            runCatching {
+                                                FirestoreProvider.db
+                                                    .collection("users")
+                                                    .document(uid)
+                                                    .set(
+                                                        mapOf("ready" to true, "email" to email.trim()),
+                                                        merge = true
+                                                    )
+                                            }
+                                        }
+
+                                        loading = false
+                                        onLoginClick()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .width(if (isWide) 220.dp else 170.dp)
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = mint)
+                            ) {
+                                Text(
+                                    text = if (loading) "Please wait…" else "Log In",
+                                    color = black,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = if (isWide) 16.sp else 14.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(dims.gap * 2))
+
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "Don’t have an account? ", color = black, fontSize = bodySize)
+                                Text(
+                                    text = "Sign Up",
+                                    color = mint,
+                                    fontSize = bodySize,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable { onSignUpClick() }
+                                )
                             }
                         }
-
-                        loading = false
-                        onLoginClick()
                     }
-                },
-                modifier = Modifier
-                    .width(170.dp)
-                    .height(42.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = mint)
-            ) {
-                Text(
-                    text = if (loading) "Please wait…" else "Log In",
-                    color = black,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                }
 
-            // Forgot Password
-            Text(
-                text = "Forgot Password?",
-                color = mint,
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .padding(top = 12.dp)
-                    .clickable { onForgotPasswordClick() },
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sign up
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Don’t have an account? ", color = black, fontSize = 14.sp)
-                Text(
-                    text = "Sign Up",
-                    color = mint,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onSignUpClick() }
-                )
+                // breathing room above bottom bar
+                item { Spacer(Modifier.height(80.dp)) }
             }
         }
     }

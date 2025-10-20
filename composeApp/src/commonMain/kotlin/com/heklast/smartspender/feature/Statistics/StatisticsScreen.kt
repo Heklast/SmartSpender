@@ -21,12 +21,27 @@ import org.smartspender.project.core.AppColors
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.navigationBars
+import com.heklast.smartspender.responsive.rememberWindowSize
+import com.heklast.smartspender.responsive.rememberDimens
+import com.heklast.smartspender.responsive.WidthClass
 
 @Preview
 @Composable
 fun StatisticsScreen() {
+    val win = rememberWindowSize()
+    val dims = rememberDimens(win)
 
-    // Use the signed-in user's UID
+    val titleSize = when (win.width) {
+        WidthClass.Compact -> 22.sp
+        WidthClass.Medium -> 26.sp
+        WidthClass.Expanded -> 30.sp
+    }
+    val cardWidth = when (win.width) {
+        WidthClass.Compact -> 0.9f
+        WidthClass.Medium -> 0.75f
+        WidthClass.Expanded -> 0.6f
+    }
+
     val uid: String? = Firebase.auth.currentUser?.uid
     if (uid == null) {
         Box(
@@ -42,7 +57,6 @@ fun StatisticsScreen() {
         return
     }
 
-    // Create the VM tied to this uid
     val vm = remember(uid) { StatisticsViewModel(testUid = uid) }
     LaunchedEffect(uid) { vm.load() }
 
@@ -61,37 +75,31 @@ fun StatisticsScreen() {
                 .background(AppColors.mint),
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(
-                top = 48.dp,
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 32.dp
+                top = dims.gap * 6,
+                start = dims.padding,
+                end = dims.padding,
+                bottom = dims.gap * 8
             )
         ) {
             item {
                 Text(
                     "Analysis",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 40.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = dims.gap * 3),
                     color = AppColors.black.copy(alpha = 0.9f),
-                    fontSize = 22.sp,
+                    fontSize = titleSize,
                     fontWeight = FontWeight.W600,
                     textAlign = TextAlign.Center
                 )
             }
 
-            // Show category list summary
             if (pie.isNotEmpty()) {
                 items(pie.size) { index ->
                     val slice = pie[index]
                     Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        horizontalArrangement = Arrangement.Center
+                        Modifier.fillMaxWidth(cardWidth).padding(bottom = dims.gap),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(slice.category.name)
-                        Text(": ")
+                        Text(slice.category.name, fontWeight = FontWeight.W500)
                         Text("€${slice.value}")
                     }
                 }
@@ -100,9 +108,9 @@ fun StatisticsScreen() {
             item {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(cardWidth)
                         .background(AppColors.white, shape = RoundedCornerShape(70.dp))
-                        .padding(16.dp),
+                        .padding(dims.padding),
                     contentAlignment = Alignment.Center
                 ) {
                     when {
@@ -118,7 +126,7 @@ fun StatisticsScreen() {
             }
 
             item {
-                Spacer(Modifier.height(80.dp))
+                Spacer(Modifier.height(dims.gap * 8))
                 Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         }

@@ -14,7 +14,6 @@ import com.heklast.smartspender.feature.Statistics.StatisticsScreen
 import com.heklast.smartspender.navigation.BottomBar
 import org.smartspender.project.feature.home.BeginScreen
 import com.heklast.smartspender.feature.intro.IntroScreen
-import com.heklast.smartspender.features.auth.ForgotPasswordScreen
 import com.heklast.smartspender.features.auth.SignUpScreen
 import com.heklast.smartspender.features.auth.WelcomeScreen
 import com.heklast.smartspender.navigation.AppState
@@ -36,7 +35,7 @@ fun App() {
 
     // One-time bootstrap: anonymous sign-in (if needed) + ensure user doc.
     LaunchedEffect(Unit) {
-       signInIfNeeded()        // creates an anonymous user if none
+      // signInIfNeeded()        // creates an anonymous user if none
         ensureUserDocCommon()   // creates/merges /users/{uid} = { ready: true }
         // No Firestore settings calls and no explicit Firestore init here.
     }
@@ -58,16 +57,11 @@ fun App() {
                     Route.Begin -> BeginScreen(appState, apiService = ApiService())
                     Route.LogIn -> WelcomeScreen(
                         onLoginClick = { appState.navigate(Route.ExpensesList) },
-                        onSignUpClick = { appState.navigate(Route.SignUp) },
-                        onForgotPasswordClick = { appState.navigate(Route.ForgotPw) }
+                        onSignUpClick = { appState.navigate(Route.SignUp) }
                     )
                     Route.SignUp -> SignUpScreen(
                         onLoginClick = { appState.navigate(Route.LogIn) },
                         onSignUpClick = { appState.navigate(Route.Profile) }
-                    )
-                    Route.ForgotPw -> ForgotPasswordScreen(
-                        authService = com.heklast.smartspender.core.di.Services.authService,
-                        onConfirmClick = { appState.navigate(Route.LogIn) },
                     )
                     Route.Profile -> ProfileScreen(appState)
                     Route.Statistics -> StatisticsScreen()

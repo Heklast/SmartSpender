@@ -7,7 +7,6 @@ enum class Route {
     Profile,
     SignUp,
     LogIn,
-    ForgotPw,
     Statistics,
     About,
     ExpensesList,

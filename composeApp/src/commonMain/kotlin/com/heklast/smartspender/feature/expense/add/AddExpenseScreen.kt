@@ -1,28 +1,11 @@
 package com.heklast.smartspender.feature.expense.add
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,10 +14,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.height
 import com.heklast.smartspender.core.domain.model.ExpenseCategory
 import org.smartspender.project.core.AppColors
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+
+// responsive helpers
+import com.heklast.smartspender.responsive.rememberWindowSize
+import com.heklast.smartspender.responsive.rememberDimens
+import com.heklast.smartspender.responsive.WidthClass
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -45,10 +38,27 @@ fun AddExpenseScreen(
 ) {
     val state by vm.state.collectAsState()
 
+    // responsiveness
+    val win = rememberWindowSize()
+    val dims = rememberDimens(win)
+
+    val titleSize = when (win.width) {
+        WidthClass.Compact  -> 20.sp
+        WidthClass.Medium   -> 24.sp
+        WidthClass.Expanded -> 28.sp
+    }
+    val formWidthFraction = when (win.width) {
+        WidthClass.Compact  -> 0.92f
+        WidthClass.Medium   -> 0.75f
+        WidthClass.Expanded -> 0.60f
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColors.mint)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .imePadding()
     ) {
         Column(
             modifier = Modifier
@@ -56,15 +66,15 @@ fun AddExpenseScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.fillMaxSize(0.05f))
+            Spacer(Modifier.fillMaxSize(0.05f))
 
             Text(
                 text = "Add Expense",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp, start = 2.dp, end = 2.dp, bottom = 40.dp),
+                    .padding(bottom = dims.gap * 3),
                 color = AppColors.black.copy(alpha = 0.9f),
-                fontSize = 20.sp,
+                fontSize = titleSize,
                 fontWeight = FontWeight.W600,
                 textAlign = TextAlign.Center
             )
@@ -74,94 +84,120 @@ fun AddExpenseScreen(
                     .fillMaxSize()
                     .background(AppColors.white, shape = RoundedCornerShape(70.dp))
             ) {
-                Column(
+                // make scrollable + center-width content
+                LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(
+                        start = dims.padding,
+                        end = dims.padding,
+                        top = dims.gap * 2,
+                        bottom = dims.gap * 8 // room for bottom bar
+                    )
                 ) {
-                    // Title
-                    LabeledField(
-                        label = "Title",
-                        value = state.title,
-                        onValueChange = { v -> vm.update { s -> s.copy(title = v) } },
-                        placeholder = "Coffee at Café"
-                    )
-
-                    // Amount
-                    LabeledField(
-                        label = "Amount",
-                        value = state.amountText,
-                        onValueChange = { v -> vm.update { s -> s.copy(amountText = v) } },
-                        placeholder = "12.50",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-
-                    Spacer(Modifier.height(4.dp))
-
-                    // Category
-                    Text(
-                        text = "Category",
-                        color = AppColors.black.copy(alpha = 0.9f),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.W500,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 4.dp)
-                    )
-
-                    // Wrap chips and bind directly to state.category
-                    FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        ExpenseCategory.values().forEach { c ->
-                            FilterChip(
-                                selected = state.category == c,
-                                onClick = { vm.update { s -> s.copy(category = c) } },
-                                label = { Text(c.name) }
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(formWidthFraction)
+                                .padding(horizontal = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Title
+                            LabeledField(
+                                label = "Title",
+                                value = state.title,
+                                onValueChange = { v -> vm.update { s -> s.copy(title = v) } },
+                                placeholder = "Coffee at Café"
                             )
+
+                            // Amount
+                            LabeledField(
+                                label = "Amount",
+                                value = state.amountText,
+                                onValueChange = { v -> vm.update { s -> s.copy(amountText = v) } },
+                                placeholder = "12.50",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            )
+
+                            Spacer(Modifier.height(dims.gap))
+
+                            // Category
+                            Text(
+                                text = "Category",
+                                color = AppColors.black.copy(alpha = 0.9f),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.W500,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 4.dp)
+                            )
+
+                            FlowRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = dims.gap),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ExpenseCategory.values().forEach { c ->
+                                    FilterChip(
+                                        selected = state.category == c,
+                                        onClick = { vm.update { s -> s.copy(category = c) } },
+                                        label = { Text(c.name) }
+                                    )
+                                }
+                            }
+
+                            // Notes
+                            LabeledField(
+                                label = "Notes",
+                                value = state.notes,
+                                onValueChange = { v -> vm.update { s -> s.copy(notes = v) } },
+                                placeholder = "Optional",
+                                singleLine = false,
+                                minLines = 3,
+                            )
+
+                            // Error
+                            state.error?.let { err ->
+                                Spacer(Modifier.height(dims.gap))
+                                Text(
+                                    text = err,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            Spacer(Modifier.height(dims.gap * 2))
+
+                            // Actions
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedButton(
+                                    onClick = onCancel,
+                                    modifier = Modifier.weight(1f)
+                                ) { Text("Cancel") }
+
+                                Button(
+                                    enabled = !state.saving,
+                                    onClick = { vm.save { onSaved() } },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = AppColors.mint,
+                                        contentColor = AppColors.black
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(if (state.saving) "Saving…" else "Save")
+                                }
+                            }
                         }
                     }
 
-                    // Notes
-                    LabeledField(
-                        label = "Notes",
-                        value = state.notes,
-                        onValueChange = { v -> vm.update { s -> s.copy(notes = v) } },
-                        placeholder = "Optional",
-                        singleLine = false,
-                        minLines = 3,
-                    )
-
-                    // Error
-                    if (state.error != null) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = state.error!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    // Actions
-                    androidx.compose.foundation.layout.Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        OutlinedButton(onClick = onCancel) { Text("Cancel") }
-                        Button(
-                            enabled = !state.saving,
-                            onClick = { vm.save { onSaved() } },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = AppColors.mint,
-                                contentColor = AppColors.black
-                            )
-                        ) { Text(if (state.saving) "Saving…" else "Save") }
-                    }
+                    // extra spacer bottom
+                    item { Spacer(Modifier.height(dims.gap * 6)) }
                 }
             }
         }
