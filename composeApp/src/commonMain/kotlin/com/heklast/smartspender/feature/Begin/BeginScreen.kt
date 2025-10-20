@@ -5,6 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.LaunchedEffect
+import com.heklast.smartspender.core.data.remote.ApiService
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,8 +25,14 @@ import smartspender.composeapp.generated.resources.light
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BeginScreen(appState: AppState) {
-
+fun BeginScreen(appState: AppState, apiService: ApiService = ApiService()) {
+    var advice by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("Loading advice...") }
+    LaunchedEffect(Unit) {
+        try {
+            advice = apiService.getRandomAdvice()
+        } catch (e: Exception) {
+            advice = "Failed to fetch advice: ${e.message ?: e::class.simpleName}"
+        }}
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,6 +77,13 @@ fun BeginScreen(appState: AppState) {
                     .fillMaxWidth().padding(4.dp),
                 color = AppColors.black.copy(alpha = 0.9f),
                 fontSize = 15.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = advice,
+                color = AppColors.black.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center
             )
             Button(

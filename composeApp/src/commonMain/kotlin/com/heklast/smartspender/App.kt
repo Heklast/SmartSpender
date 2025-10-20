@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import com.heklast.smartspender.core.data.remote.ApiService
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import com.heklast.smartspender.feature.About.AboutScreen
@@ -53,7 +54,7 @@ fun App() {
             Surface {
                 when (route) {
                     Route.Intro -> IntroScreen(onTimeout = { appState.navigate(Route.Begin) })
-                    Route.Begin -> BeginScreen(appState)
+                    Route.Begin -> BeginScreen(appState, apiService = ApiService())
                     Route.LogIn -> WelcomeScreen(
                         onLoginClick = { appState.navigate(Route.ExpensesList) },
                         onSignUpClick = { appState.navigate(Route.SignUp) },
