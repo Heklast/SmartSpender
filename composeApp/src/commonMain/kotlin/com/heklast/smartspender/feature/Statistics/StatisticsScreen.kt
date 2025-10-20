@@ -3,8 +3,6 @@ package com.heklast.smartspender.feature.Statistics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -14,13 +12,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.heklast.smartspender.feature.Statistics.InputSlice
-import com.heklast.smartspender.feature.Statistics.PieChart
-import com.heklast.smartspender.features.profile.presentation.ProfileViewModel
 import com.heklast.smartspender.features.statistics.StatisticsViewModel
 import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.firestore.firestore
-import kotlinx.coroutines.launch
+import dev.gitlive.firebase.auth.auth
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.smartspender.project.core.AppColors
 
@@ -28,8 +22,25 @@ import org.smartspender.project.core.AppColors
 @Composable
 fun StatisticsScreen() {
 
-    val vm = remember { StatisticsViewModel(testUid = "rsmCNYtCjLRlk3f1M5xuv4rkTIM2") } // remove testUid in prod
-    LaunchedEffect(Unit) { vm.load() }
+    // Use the signed-in user's UID
+    val uid: String? = Firebase.auth.currentUser?.uid
+    if (uid == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(AppColors.mint),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Please sign in to see your statistics.",
+                color = AppColors.black,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+
+    // Create the VM tied to this uid (your VM already supports testUid)
+    val vm = remember(uid) { StatisticsViewModel(testUid = uid) }
+    LaunchedEffect(uid) { vm.load() }
 
     val pie by vm.pieData.collectAsState()
     val loading by vm.loading.collectAsState()
@@ -45,18 +56,26 @@ fun StatisticsScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.fillMaxSize(0.05f))
-            Text("Analysis", modifier = Modifier
-                .fillMaxWidth().padding(2.dp,2.dp,2.dp,40.dp),
+            Text(
+                "Analysis",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(2.dp, 2.dp, 2.dp, 40.dp),
                 color = AppColors.black.copy(alpha = 0.9f),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.W600,
-                textAlign = TextAlign.Center)
+                textAlign = TextAlign.Center
+            )
+
+            // Optional quick summary above the chart
             pie.forEach { slice ->
                 Row(
-                    Modifier.fillMaxWidth().padding(bottom = 70.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 70.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(slice.category)
+                    Text(slice.category.name)
                     Text(": ")
                     Text("€${slice.value}")
                 }
@@ -72,9 +91,13 @@ fun StatisticsScreen() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(100.dp))
 
-                    Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
-                    Spacer(modifier = Modifier.height(100.dp))
                         when {
                             loading -> CircularProgressIndicator()
                             error != null -> Text("Error: $error")
@@ -84,34 +107,9 @@ fun StatisticsScreen() {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
-
-                        Column(
-                            modifier = Modifier.fillMaxWidth(0.9f)
-                                .align(Alignment.CenterHorizontally)
-                        ) {
-
-                        }
                     }
                 }
             }
         }
     }
-}
-
-private suspend fun onSaveToDb(username: String, number: String, email: String) {
-    val uid = "rsmCNYtCjLRlk3f1M5xuv4rkTIM2" // TODO: replace with Auth UID
-    val updates = mapOf(
-        "fullName" to username,
-        "email" to email,
-        "number" to number.toIntOrNull()
-    )
-    Firebase.firestore.collection("users").document(uid).update(updates)
-}
-
-private fun onUpdateButtonClick(
-    enabled: Boolean,
-    setEnabled: (Boolean) -> Unit,
-    save: () -> Unit
-) {
-    if (!enabled) setEnabled(true) else { save(); setEnabled(false) }
 }

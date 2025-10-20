@@ -9,7 +9,6 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.Timestamp
-import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.firestore.toMilliseconds
 import kotlinx.datetime.Instant
 import kotlin.math.round
@@ -20,14 +19,14 @@ class FirebaseExpenseApi : ExpenseApi {
         Firebase.auth.currentUser?.uid ?: error("No signed-in user")
 
     private fun expensesCol() =
-        Firebase.firestore.collection("users").document(uid()).collection("expenses")
+        FirestoreProvider.db.collection("users").document(uid()).collection("expenses")
 
     private fun round2(a: Double) = round(a * 100.0) / 100.0
 
     private fun CreateExpenseRequest.toMap(): Map<String, Any?> = mapOf(
         "title" to title,
         "amount" to round2(amount),
-        "date" to Instant.fromEpochMilliseconds(dateEpochMs), // GitLive supports kotlinx.datetime.Instant
+        "date" to Instant.fromEpochMilliseconds(dateEpochMs),
         "category" to category,
         "notes" to notes,
         "tags" to (tags ?: emptyList<String>())
@@ -105,5 +104,4 @@ class FirebaseExpenseApi : ExpenseApi {
         Result.Ok(Unit)
     } catch (t: Throwable) {
         Result.Err(t)
-    }
-}
+    }}

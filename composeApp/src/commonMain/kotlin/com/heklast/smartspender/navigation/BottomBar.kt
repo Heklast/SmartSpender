@@ -29,11 +29,11 @@ fun BottomBar(
     onNavigate: (Route) -> Unit
 ) {
     val items = listOf(
-        BottomItem(Route.Profile, "Home", {  Image(
+        BottomItem(Route.ExpensesList, "Home", {  Image(
             painter = painterResource(Res.drawable.home),
             contentDescription = null
         ) }),
-        BottomItem(Route.Profile, "Add expense", {  Image(
+        BottomItem(Route.AddExpense, "Add expense", {  Image(
             painter = painterResource(Res.drawable.add),
             contentDescription = null
         ) }),

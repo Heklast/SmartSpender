@@ -18,23 +18,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.heklast.smartspender.core.domain.model.ExpenseCategory
+import org.smartspender.project.core.AppColors
 import kotlin.math.roundToInt
 
 // Input: NO color, use Double to match your demo literals
 data class InputSlice(
-    val category: String,
+    val category: ExpenseCategory,
     val value: Double
 )
 
 private data class ColoredSlice(
-    val category: String,
+    val category: ExpenseCategory,
     val value: Double,
     val color: Color
 )
 
 private val defaultPalette = listOf(
-    Color(0xFF5B8DEF), Color(0xFFF55F5F), Color(0xFF50C878), Color(0xFFFFB020),
-    Color(0xFF9B59B6), Color(0xFF2ECC71), Color(0xFFE67E22), Color(0xFF1ABC9C)
+    AppColors.lightGreen, AppColors.mint, AppColors.darkGreen, AppColors.black, AppColors.white
 )
 
 @Composable
@@ -49,7 +50,7 @@ fun PieChart(
     val data: List<ColoredSlice> = remember(dataRaw) {
         dataRaw.filter { it.value > 0.0 }.mapIndexed { idx, d ->
             ColoredSlice(
-                category = d.category.ifBlank { "Uncategorized" },
+                category = d.category,
                 value = d.value,
                 color = defaultPalette[idx % defaultPalette.size]
             )
