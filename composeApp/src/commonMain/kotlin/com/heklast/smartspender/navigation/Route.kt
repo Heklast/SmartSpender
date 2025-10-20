@@ -9,5 +9,9 @@ enum class Route {
     LogIn,
     ForgotPw,
     Statistics,
-    About
+    About,
+
+    ExpensesList,
+    AddExpense
+
 }

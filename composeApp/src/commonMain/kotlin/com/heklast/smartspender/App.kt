@@ -24,6 +24,7 @@ import com.heklast.smartspender.core.data.remote.firebase.enableOfflineCache
 import com.heklast.smartspender.core.data.remote.firebase.ensureUserDocCommon
 import com.heklast.smartspender.core.data.remote.firebase.signInIfNeeded
 
+
 @Composable
 @Preview
 fun App() {

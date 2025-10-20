@@ -8,9 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.heklast.smartspender.core.data.remote.dto.ExpenseResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesListScreen(
     vm: ExpensesListViewModel,
@@ -18,20 +17,48 @@ fun ExpensesListScreen(
 ) {
     val items by vm.items.collectAsState()
     val loading by vm.loading.collectAsState()
-
-    LaunchedEffect(Unit) { vm.refresh() }
+    val error by vm.error.collectAsState()
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Expenses") },
+                actions = {
+                    TextButton(enabled = !loading, onClick = { vm.refresh() }) {
+                        Text("Refresh")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddClick) { Text("+") }
         }
     ) { p ->
-        Column(Modifier.padding(p).fillMaxSize()) {
+        Column(
+            Modifier
+                .padding(p)
+                .fillMaxSize()
+        ) {
             if (loading && items.isEmpty()) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
+
+            if (error != null) {
+                AssistChip(
+                    onClick = { vm.refresh() },
+                    label = { Text(error ?: "") },
+                    modifier = Modifier
+                        .padding(12.dp)
+                )
+            }
+
             LazyColumn(Modifier.fillMaxSize()) {
-                items(items) { e -> ExpenseRow(e, onDelete = { vm.delete(e.id) }) }
+                items(items) { e ->
+                    ExpenseRow(
+                        e = e,
+                        onDelete = { vm.delete(e.id) }
+                    )
+                }
             }
         }
     }
@@ -42,11 +69,20 @@ private fun ExpenseRow(
     e: ExpenseResponse,
     onDelete: () -> Unit
 ) {
-    Card(Modifier.fillMaxWidth().padding(8.dp)) {
-        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Column(Modifier.weight(1f)) {
                 Text(e.title, style = MaterialTheme.typography.titleMedium)
-                Text("${e.amount} • ${e.category}")
+                Text("${e.amount}  •  ${e.category}")
             }
             TextButton(onClick = onDelete) { Text("Delete") }
         }

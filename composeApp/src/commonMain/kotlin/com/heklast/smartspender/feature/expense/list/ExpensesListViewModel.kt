@@ -5,7 +5,6 @@ import com.heklast.smartspender.core.data.remote.dto.ExpenseResponse
 import com.heklast.smartspender.core.di.Services
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,12 +20,20 @@ class ExpensesListViewModel(
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
+    init {
+        refresh()
+    }
+
     fun refresh() {
         _loading.value = true
+        _error.value = null
         scope.launch {
             when (val r = api.list(limit = 50, offset = 0)) {
                 is Result.Ok  -> _items.value = r.value.items
-                is Result.Err -> { /* TODO: surface error */ }
+                is Result.Err -> _error.value = r.cause.message ?: "Failed to load expenses"
             }
             _loading.value = false
         }
@@ -36,8 +43,10 @@ class ExpensesListViewModel(
         scope.launch {
             when (api.delete(id)) {
                 is Result.Ok  -> _items.value = _items.value.filterNot { it.id == id }
-                is Result.Err -> { /* TODO: surface error */ }
+                is Result.Err -> _error.value = "Delete failed"
             }
         }
     }
+
+    fun clearError() { _error.value = null }
 }
