@@ -10,6 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 kotlin {
@@ -18,7 +19,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -28,12 +29,15 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
+            implementation("com.google.firebase:firebase-analytics-ktx")
+            implementation("com.google.firebase:firebase-crashlytics-ktx")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:34.3.0"))
 
         }
         commonMain.dependencies {
@@ -91,18 +95,4 @@ android {
     }
 }
 
-dependencies {
-    debugImplementation(compose.uiTooling)
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
-
-
-    // TODO: Add the dependencies for Firebase products you want to use
-    // When using the BoM, don't specify versions in Firebase dependencies
-    implementation("com.google.firebase:firebase-analytics")
-
-
-    // Add the dependencies for any other desired Firebase products
-    // https://firebase.google.com/docs/android/setup#available-libraries
-}
 
