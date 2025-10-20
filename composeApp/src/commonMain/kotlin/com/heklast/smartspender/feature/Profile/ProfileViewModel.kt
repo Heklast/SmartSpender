@@ -23,10 +23,17 @@ class ProfileViewModel(
     val user: StateFlow<User?> = _user
 
     fun load() {
-       viewModelScope.launch {
-           val uid = testUid ?: dev.gitlive.firebase.Firebase.auth.currentUser?.uid?: return@launch
-           _user.value = UserRepository.getUserById(uid)
-       }
+        viewModelScope.launch {
+            val uid = testUid ?: Firebase.auth.currentUser?.uid ?: return@launch
+
+            // 1) show whatever is cached (works offline immediately)
+            val cached = UserRepository.getUserById(uid, preferCache = true)
+            if (cached != null) _user.value = cached
+
+            // 2) then try to refresh from server; keep cached if it fails (offline)
+            val fresh = UserRepository.getUserById(uid, preferCache = false)
+            if (fresh != null) _user.value = fresh
+        }
     }
 
     fun changePassword(

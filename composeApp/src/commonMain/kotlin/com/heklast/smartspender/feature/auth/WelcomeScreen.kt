@@ -120,7 +120,7 @@ fun WelcomeScreen(
                                 onValueChange = { email = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp)
+                                    .heightIn(min = 60.dp)      // was .height(48.dp)
                                     .background(inputBg, shape = RoundedCornerShape(14.dp)),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -144,7 +144,7 @@ fun WelcomeScreen(
                                 onValueChange = { password = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp)
+                                    .heightIn(min = 60.dp)      // was .height(48.dp)
                                     .background(inputBg, shape = RoundedCornerShape(12.dp)),
                                 singleLine = true,
                                 visualTransformation = PasswordVisualTransformation(),

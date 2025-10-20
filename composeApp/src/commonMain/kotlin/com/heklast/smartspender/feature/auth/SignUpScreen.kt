@@ -328,7 +328,8 @@ fun CustomTextField(
     backgroundColor: Color,
     keyboardType: KeyboardType = KeyboardType.Text,
     isPassword: Boolean = false,
-    labelFontSize: androidx.compose.ui.unit.TextUnit = 14.sp
+    labelFontSize: androidx.compose.ui.unit.TextUnit = 14.sp,
+    fieldHeight: Dp = 60.dp // ⬅️ make it taller than 56.dp
 ) {
     Text(
         text = label,
@@ -346,7 +347,7 @@ fun CustomTextField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .height(48.dp)
+            .height(fieldHeight) // ⬅️ increased height (was 48.dp)
             .background(backgroundColor, shape = RoundedCornerShape(14.dp)),
         shape = RoundedCornerShape(14.dp),
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
