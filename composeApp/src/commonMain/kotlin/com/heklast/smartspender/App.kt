@@ -64,7 +64,8 @@ fun App() {
                         onSignUpClick = { appState.navigate(Route.Profile) }
                     )
                     Route.ForgotPw -> ForgotPasswordScreen(
-                        onConfirmClick = { appState.navigate(Route.LogIn) }
+                        authService = com.heklast.smartspender.core.di.Services.authService,
+                        onConfirmClick = { appState.navigate(Route.LogIn) },
                     )
                     Route.Profile -> ProfileScreen()
                     Route.Statistics -> StatisticsScreen()

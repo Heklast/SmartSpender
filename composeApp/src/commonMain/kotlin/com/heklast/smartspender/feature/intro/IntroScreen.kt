@@ -66,6 +66,13 @@ fun IntroScreen(onTimeout: () -> Unit, apiService: ApiService = ApiService()) {
                     textAlign = TextAlign.Center
                 )
             }
+            Text(
+                text = advice,
+                color = AppColors.black.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -80,12 +87,6 @@ fun IntroScreen(onTimeout: () -> Unit, apiService: ApiService = ApiService()) {
                 textAlign = TextAlign.Center
             )
 
-            Text(
-                text = advice,
-                color = AppColors.lightGreen.copy(alpha = 0.8f),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
+
         }
     }

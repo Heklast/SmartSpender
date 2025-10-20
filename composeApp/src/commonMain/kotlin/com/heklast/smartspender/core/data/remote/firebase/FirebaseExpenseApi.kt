@@ -26,7 +26,7 @@ class FirebaseExpenseApi : ExpenseApi {
     private fun CreateExpenseRequest.toMap(): Map<String, Any?> = mapOf(
         "title" to title,
         "amount" to round2(amount),
-        "date" to Instant.fromEpochMilliseconds(dateEpochMs),
+        "date" to Instant.fromEpochMilliseconds(dateEpochMs), // kotlinx.datetime.Instant
         "category" to category,
         "notes" to notes,
         "tags" to (tags ?: emptyList<String>())
@@ -104,4 +104,5 @@ class FirebaseExpenseApi : ExpenseApi {
         Result.Ok(Unit)
     } catch (t: Throwable) {
         Result.Err(t)
-    }}
+    }
+}

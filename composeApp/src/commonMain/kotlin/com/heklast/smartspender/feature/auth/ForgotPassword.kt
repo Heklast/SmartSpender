@@ -1,7 +1,7 @@
+// features/auth/ForgotPasswordScreen.kt
 package com.heklast.smartspender.features.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -14,25 +14,25 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.heklast.smartspender.core.auth.AuthService
+import com.heklast.smartspender.core.di.Services
 import kotlinx.coroutines.launch
 
 @Composable
 fun ForgotPasswordScreen(
-    authService: AuthService,
-    onConfirmClick: () -> Unit = {},
-    onError: (String) -> Unit = {}
+    authService: AuthService = Services.authService,
+    onConfirmClick: () -> Unit = {}   // e.g., navigate back to login
+
 ) {
     var email by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(false) }
 
-    // Colors
     val mint = Color(0xFF3aB09E)
     val mintLight = Color(0xFFDFF7EB)
     val inputBg = Color(0xFFF5FFF8)
     val black = Color(0xFF000000)
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -46,9 +46,7 @@ fun ForgotPasswordScreen(
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = black,
-            modifier = Modifier
-                .padding(top = 48.dp, bottom = 24.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(top = 48.dp, bottom = 24.dp),
             textAlign = TextAlign.Center
         )
 
@@ -58,11 +56,10 @@ fun ForgotPasswordScreen(
                 .fillMaxHeight()
                 .background(mintLight, shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
                 .padding(horizontal = 24.dp, vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Reset Password?",
+                text = "Reset your password",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = black,
@@ -70,9 +67,8 @@ fun ForgotPasswordScreen(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
             )
-
             Text(
-                text = "Enter your email address associated with your account and your new password!",
+                text = "Enter your account email. We’ll send you a password reset link.",
                 fontSize = 14.sp,
                 color = black,
                 modifier = Modifier
@@ -80,7 +76,7 @@ fun ForgotPasswordScreen(
                     .padding(bottom = 24.dp)
             )
 
-            // Email and new password fields
+            // Email field
             CustomTextField(
                 label = "Email",
                 value = email,
@@ -91,45 +87,29 @@ fun ForgotPasswordScreen(
                 backgroundColor = inputBg,
                 keyboardType = KeyboardType.Email
             )
-            CustomTextField(
-                label = "New Password",
-                value = newPassword,
-                onValueChange = { newPassword = it },
-                placeholderText = "••••••••",
-                labelColor = black,
-                borderColor = mint,
-                backgroundColor = inputBg,
-                isPassword = true
-            )
 
-            // Confirm button
             Button(
+                enabled = !loading,
                 onClick = {
-                    if (email.isNotBlank() && newPassword.isNotBlank()) {
-                        isLoading = true
-                        CoroutineScope(Dispatchers.Main).launch {
-                            authService.resetPassword(email, newPassword) { success, error ->
-                                isLoading = false
-                                if (success) {
-                                    onConfirmClick()
-                                } else {
-                                    onError(error ?: "Failed to reset password")
-                                }
-                            }
-                        }
-                    } else {
-                        onError("Please fill all fields")
+                    if (email.isBlank()) {
+                        return@Button
+                    }
+                    scope.launch {
+                        loading = true
+                        val res = authService.sendPasswordReset(email.trim())
+                        loading = false
+                        res.onSuccess { onConfirmClick() }
+
                     }
                 },
-                enabled = !isLoading,
                 modifier = Modifier
-                    .width(180.dp)
-                    .height(75.dp)
+                    .width(200.dp)
+                    .height(52.dp)
                     .padding(top = 24.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = mint)
             ) {
                 Text(
-                    text = if (isLoading) "Please wait..." else "Confirm Password",
+                    text = if (loading) "Sending…" else "Send reset email",
                     color = black,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -137,6 +117,3 @@ fun ForgotPasswordScreen(
         }
     }
 }
-
-
-
