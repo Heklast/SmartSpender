@@ -30,6 +30,9 @@ import com.heklast.smartspender.core.data.remote.firebase.signInIfNeeded
 fun App() {
     val appState = remember { AppState() }
     val route by appState.route.collectAsState()
+    val listVm = remember { com.heklast.smartspender.feature.expense.list.ExpensesListViewModel() }
+    val formVm = remember { com.heklast.smartspender.feature.expense.add.ExpenseFormViewModel() }
+
 
     // ✅ ADD: one-time Firebase bootstrap (anonymous sign-in + ensure /users/{uid} + offline cache)
     LaunchedEffect(Unit) {
@@ -78,6 +81,20 @@ fun App() {
                     Route.Statistics -> StatisticsScreen()
 
                     Route.About -> AboutScreen()
+
+                    Route.ExpensesList -> com.heklast.smartspender.feature.expense.list.ExpensesListScreen(
+                        vm = listVm,
+                        onAddClick = { appState.navigate(Route.AddExpense) }
+                    )
+
+                    Route.AddExpense -> com.heklast.smartspender.feature.expense.add.AddExpenseScreen(
+                        vm = formVm,
+                        onSaved = {
+                            listVm.refresh()         // refresh list after save
+                            appState.navigate(Route.ExpensesList)
+                        },
+                        onCancel = { appState.navigate(Route.ExpensesList) }
+                    )
                 }
             }
         }
