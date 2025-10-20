@@ -35,8 +35,8 @@ fun App() {
 
     // One-time bootstrap: anonymous sign-in (if needed) + ensure user doc.
     LaunchedEffect(Unit) {
-       // signInIfNeeded()        // creates an anonymous user if none
-        //ensureUserDocCommon()   // creates/merges /users/{uid} = { ready: true }
+       signInIfNeeded()        // creates an anonymous user if none
+        ensureUserDocCommon()   // creates/merges /users/{uid} = { ready: true }
         // No Firestore settings calls and no explicit Firestore init here.
     }
 
