@@ -18,10 +18,10 @@ class ProfileViewModel(
     val user: StateFlow<User?> = _user
 
     fun load() {
-        viewModelScope.launch {
-            val uid = testUid ?: return@launch
-            _user.value = UserRepository.getUserById(uid)
-        }
+       viewModelScope.launch {
+           val uid = testUid ?: dev.gitlive.firebase.Firebase.auth.currentUser?.uid?: return@launch
+           _user.value = UserRepository.getUserById(uid)
+       }
     }
 
     fun changePassword(
