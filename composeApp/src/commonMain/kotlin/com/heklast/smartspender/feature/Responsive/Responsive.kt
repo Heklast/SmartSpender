@@ -33,9 +33,9 @@ fun rememberWindowSize(): WindowSize {
         val w = maxWidth
         val h = maxHeight
         val widthClass = when {
-            w < 600.dp -> WidthClass.Compact       // phones portrait
+            w < 730.dp -> WidthClass.Compact       // phones portrait, smallPhone in android
             w < 840.dp -> WidthClass.Medium        // big phones / small tablets
-            else       -> WidthClass.Expanded      // tablets / wide
+            else       -> WidthClass.Expanded      // tablets / wide, medPhone in android
         }
         val heightClass = when {
             h < 480.dp -> HeightClass.Compact

@@ -32,7 +32,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 
-// ✅ Responsive helpers
+//Responsive helpers
 import com.heklast.smartspender.responsive.rememberWindowSize
 import com.heklast.smartspender.responsive.rememberDimens
 import com.heklast.smartspender.responsive.WidthClass
@@ -50,6 +50,7 @@ fun ProfileScreen(appState: AppState) {
     val fieldWidth = when (win.width) {
         WidthClass.Compact -> 0.9f
         WidthClass.Medium -> 0.7f
+        WidthClass.Expanded -> 0.6f
         WidthClass.Expanded -> 0.6f
     }
 

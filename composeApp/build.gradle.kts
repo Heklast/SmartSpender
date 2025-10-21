@@ -16,6 +16,7 @@ plugins {
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
     id("com.google.firebase.appdistribution") version "5.1.1"
+    id("com.google.firebase.crashlytics") version "3.0.2"
 }
 
 kotlin {
@@ -40,6 +41,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose) // keep Android-only here
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
+            implementation("com.google.firebase:firebase-analytics-ktx:22.0.0")
+            implementation("com.google.firebase:firebase-crashlytics-ktx:19.0.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -121,6 +124,9 @@ dependencies {
 
     // Firebase BoM (Android)
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
-    implementation("com.google.firebase:firebase-analytics")
+    //implementation("com.google.firebase:firebase-analytics")
     // Add more Firebase Android deps as needed
+    // ✅ Crashlytics
+
+
 }
